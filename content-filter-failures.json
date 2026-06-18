@@ -1,0 +1,324 @@
+{
+  "tool": "text-first-extract-stage3",
+  "tool_version": "1.0.0",
+  "description": "Pages rejected by Azure OpenAI content-management policy during Stage 3. Each is flagged text_safety.review on its sidecar; resolve via a content-filter modification/exemption, then re-run --force on these files.",
+  "updated_at_utc": "2026-06-17T11:15:32Z",
+  "count": 45,
+  "failures": [
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "response content-filtered (finish_reason=content_filter)"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 5,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 6,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 10,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 4,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "response content-filtered (finish_reason=content_filter)"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 5,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 6,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 8,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 10,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 13,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 18,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 20,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 21,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 22,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 23,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 24,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 25,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 26,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 28,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 34,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 40,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 50,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 56,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731168.pdf",
+      "page_number": 1,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731168.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731168.pdf",
+      "page_number": 10,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731168.pdf",
+      "page_number": 20,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731200.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731200.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731200.pdf",
+      "page_number": 9,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731200.pdf",
+      "page_number": 13,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 4,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 8,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 16,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731361.pdf",
+      "page_number": 9,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731488.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731576.pdf",
+      "page_number": 1,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731721.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    },
+    {
+      "file": "0001/EFTA02731737.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T11:15:32Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\",\"typ"
+    }
+  ]
+}

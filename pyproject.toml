@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "epstein-ingest"
+version = "1.0.0"
+description = "Staged PDF ingestion pipeline: text-first pre-extraction (stage1), render/classify/register (stage2), nano summaries + safety triage (stage3)"
+requires-python = ">=3.10"
+dependencies = ["PyMuPDF>=1.27"]
+
+[project.optional-dependencies]
+# Optional: enables real-Markdown reconstruction on born-digital pages (Spec §6). The tool runs fully
+# without it (falls back to structured_text). PyMuPDF + stdlib is the only required surface (Spec §3.8).
+markdown = ["pymupdf4llm"]
+# Stage 3 (Azure OpenAI summaries) is the only part that touches the network. Stages 1–2 stay stdlib +
+# PyMuPDF; install this extra to run Stage 3. ``requests`` matches the sv-kb pipeline's HTTP client.
+stage3 = ["requests>=2.31"]
+
+[project.scripts]
+text-first-extract = "src.stage1.cli:main"
+text-first-extract-stage2 = "src.stage2.cli:main"
+text-first-extract-stage3 = "src.stage3.cli:main"
+
+[tool.setuptools]
+packages = ["src", "src.stage1", "src.stage2", "src.stage3"]

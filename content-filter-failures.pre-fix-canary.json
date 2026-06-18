@@ -1,0 +1,1262 @@
+{
+  "tool": "text-first-extract-stage3",
+  "tool_version": "1.0.0",
+  "description": "Pages rejected by Azure OpenAI content-management policy during the Stage 3 DataSet-12 canary. Each is a text_safety=review signal; resolve via an Azure content-filter modification/exemption, then re-run stage3 --force on these files.",
+  "source_run_utc": "2026-06-17T09:55:40Z",
+  "count": 137,
+  "by_code": {
+    "bad_output": 8,
+    "content_filter": 129
+  },
+  "failures": [
+    {
+      "file": "0001/EFTA02730274.pdf",
+      "page_number": 15,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "bad_output",
+      "error_message": "unparseable structured output: Expecting value: line 1 column 1 (char 0)",
+      "status_now": "recovered",
+      "filter_trigger": "none"
+    },
+    {
+      "file": "0001/EFTA02730274.pdf",
+      "page_number": 18,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "bad_output",
+      "error_message": "unparseable structured output: Expecting value: line 1 column 1 (char 0)",
+      "status_now": "recovered",
+      "filter_trigger": "none"
+    },
+    {
+      "file": "0001/EFTA02730274.pdf",
+      "page_number": 142,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "bad_output",
+      "error_message": "unparseable structured output: Expecting value: line 1 column 1 (char 0)",
+      "status_now": "recovered",
+      "filter_trigger": "none"
+    },
+    {
+      "file": "0001/EFTA02730486.pdf",
+      "page_number": 233,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "bad_output",
+      "error_message": "unparseable structured output: Expecting value: line 1 column 1 (char 0)",
+      "status_now": "recovered",
+      "filter_trigger": "none"
+    },
+    {
+      "file": "0001/EFTA02730486.pdf",
+      "page_number": 234,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "bad_output",
+      "error_message": "unparseable structured output: Expecting value: line 1 column 1 (char 0)",
+      "status_now": "recovered",
+      "filter_trigger": "none"
+    },
+    {
+      "file": "0001/EFTA02730741.pdf",
+      "page_number": 6,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "bad_output",
+      "error_message": "unparseable structured output: Expecting value: line 1 column 1 (char 0)",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:low"
+    },
+    {
+      "file": "0001/EFTA02730741.pdf",
+      "page_number": 205,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "bad_output",
+      "error_message": "unparseable structured output: Expecting value: line 1 column 1 (char 0)",
+      "status_now": "recovered",
+      "filter_trigger": "none"
+    },
+    {
+      "file": "0001/EFTA02730741.pdf",
+      "page_number": 228,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "bad_output",
+      "error_message": "unparseable structured output: Expecting value: line 1 column 1 (char 0)",
+      "status_now": "recovered",
+      "filter_trigger": "none"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 5,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 6,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731039.pdf",
+      "page_number": 10,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 5,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 6,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 8,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 10,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 13,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 18,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 20,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 21,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 22,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 23,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 24,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 25,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 26,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 28,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 33,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:medium"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 34,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 35,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:medium"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 40,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 50,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731082.pdf",
+      "page_number": 56,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731168.pdf",
+      "page_number": 1,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731168.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731168.pdf",
+      "page_number": 10,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731168.pdf",
+      "page_number": 20,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731200.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731200.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731200.pdf",
+      "page_number": 9,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731200.pdf",
+      "page_number": 13,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 4,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 8,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 16,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731226.pdf",
+      "page_number": 20,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:medium"
+    },
+    {
+      "file": "0001/EFTA02731254.pdf",
+      "page_number": 6,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "self_harm:medium"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 4,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 5,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 8,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 9,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 10,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 11,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 12,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 13,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 14,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 15,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 16,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 17,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 19,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 22,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 23,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 24,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 26,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 29,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 30,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 31,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 32,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 33,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 35,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 36,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 37,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "self_harm:medium"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 39,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 40,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 41,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 42,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 44,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 45,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 48,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 50,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 51,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 53,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 55,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 56,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 57,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 58,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 59,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 61,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 62,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 67,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 68,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 73,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 74,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 79,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731260.pdf",
+      "page_number": 80,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 4,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 5,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 6,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 10,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 12,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 13,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 16,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 17,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731341.pdf",
+      "page_number": 19,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731361.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731361.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak+self_harm:medium"
+    },
+    {
+      "file": "0001/EFTA02731361.pdf",
+      "page_number": 9,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731361.pdf",
+      "page_number": 16,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731393.pdf",
+      "page_number": 14,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731393.pdf",
+      "page_number": 16,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731420.pdf",
+      "page_number": 11,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "violence:medium"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 7,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 8,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 12,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 13,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 15,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 16,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 18,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 20,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 23,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 24,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 26,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 27,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731433.pdf",
+      "page_number": 29,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "jailbreak"
+    },
+    {
+      "file": "0001/EFTA02731465.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "hate:low+violence:medium"
+    },
+    {
+      "file": "0001/EFTA02731488.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731576.pdf",
+      "page_number": 1,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731662.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:medium"
+    },
+    {
+      "file": "0001/EFTA02731721.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    },
+    {
+      "file": "0001/EFTA02731729.pdf",
+      "page_number": 3,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:medium"
+    },
+    {
+      "file": "0001/EFTA02731737.pdf",
+      "page_number": 2,
+      "timestamp": "2026-06-17T09:55:40Z",
+      "error_code": "content_filter",
+      "error_message": "http 400: {\"error\":{\"message\":\"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering pol",
+      "status_now": "blocked",
+      "filter_trigger": "sexual:high"
+    }
+  ],
+  "retest_utc": "2026-06-17 (filter=High)",
+  "retest_status": {
+    "recovered": 7,
+    "blocked": 130
+  },
+  "retest_triggers": {
+    "none": 7,
+    "sexual:low": 1,
+    "sexual:high": 43,
+    "sexual:medium": 5,
+    "self_harm:medium": 2,
+    "jailbreak": 76,
+    "jailbreak+self_harm:medium": 1,
+    "violence:medium": 1,
+    "hate:low+violence:medium": 1
+  }
+}

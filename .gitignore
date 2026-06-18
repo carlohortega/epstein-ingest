@@ -1,0 +1,53 @@
+# ---- Secrets / local config -------------------------------------------------
+# Stage 3 reads Azure OpenAI credentials from these; never commit them.
+.env
+.env.*
+!.env.example
+
+# ---- Python byte-compiled / cache -------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ---- Packaging / build artifacts --------------------------------------------
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+pip-wheel-metadata/
+MANIFEST
+
+# ---- Virtual environments ---------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# ---- Test / type / lint caches ----------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# ---- Pipeline run outputs (generated next to data roots, never source) ------
+# Run manifests + batch state are reproducible from a run; keep them out of git.
+# (Per-PDF sidecars are written next to the source PDFs in the data root, which
+#  lives outside this repo, so they need no pattern here.)
+extract-run-manifest.json
+stage2-run-manifest.json
+stage3-run-manifest.json
+stage3-batch-state.json
+*.tmp
+
+# ---- Editor / OS ------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
