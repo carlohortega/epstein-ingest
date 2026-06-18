@@ -7,7 +7,9 @@ name = "epstein-ingest"
 version = "1.0.0"
 description = "Staged PDF ingestion pipeline: text-first pre-extraction (stage1), render/classify/register (stage2), nano summaries + safety triage (stage3)"
 requires-python = ">=3.10"
-dependencies = ["PyMuPDF>=1.27"]
+# Pinned: 1.27.2.3 has a fatal C-level bug (none_dealloc SIGABRT in get_texttrace()) on Linux/py3.10.
+# 1.27.2 is validated against this corpus. Do not float past it without re-running the canary.
+dependencies = ["PyMuPDF==1.27.2"]
 
 [project.optional-dependencies]
 # Optional: enables real-Markdown reconstruction on born-digital pages (Spec §6). The tool runs fully
