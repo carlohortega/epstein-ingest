@@ -1,7 +1,8 @@
 # Handoff: Stage 5 — Finalize the document summary (text + vision fusion)
 
-**Status:** requirements / build handoff — **NOT yet implemented.** Stages 1–4 are built; Stage 5 is the
-next build. **Read first:** [`STRATEGY-pdf-ingestion-stages.md`](STRATEGY-pdf-ingestion-stages.md)
+**Status:** **BUILT + tested 2026-06-19** (`src/stage5/`, acceptance suite `tests/run_stage5_tests.py`
+green; launcher `C:\epstein-ingest\run_stage5.py`). Run it last per dataset, after Stages 3 AND 4 are
+frozen (§7). **Read first:** [`STRATEGY-pdf-ingestion-stages.md`](STRATEGY-pdf-ingestion-stages.md)
 (the "Stage 5 — scope to vision docs only" refinement), [`HANDOFF-stage3-text-summaries.md`](HANDOFF-stage3-text-summaries.md)
 (the doc-reduce machinery you will **reuse**), and [`HANDOFF-stage4-image-vision.md`](HANDOFF-stage4-image-vision.md)
 (produces the captions/descriptions + the `has_visual_content` gate Stage 5 consumes).
