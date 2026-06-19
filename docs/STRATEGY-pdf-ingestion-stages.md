@@ -1,10 +1,14 @@
 # Strategy: Staged, Cost-Optimized PDF Ingestion (Stages 1–7)
 
-**Status:** Stages 1–3 **built** (Stage 3 validated on DataSet‑12, running on DataSet‑11); Stages 4–7
-specified. See the **"Update — Stages 1–3 built"** section directly below for amendments.
+**Status:** Stages 1–**4 built** (Stage 3 validated on DataSet‑12, running on DataSet‑11; **Stage 4 built +
+gate-validated 2026-06-19**, all Azure services live — see the Stage‑4 handoff's "Stage 4 built" update box);
+Stages 5–7 specified. See the **"Update — Stages 1–3 built"** section directly below for amendments.
 **Audience:** implementers of the staging pipeline and the sv-kb ingestion (“emulator”) step.
 **Companion docs:** [`HANDOFF-text-first-pdf-extraction.md`](HANDOFF-text-first-pdf-extraction.md) (Stage 1),
-[`HANDOFF-stage2-render-classify-register.md`](HANDOFF-stage2-render-classify-register.md) (Stage 2).
+[`HANDOFF-stage2-render-classify-register.md`](HANDOFF-stage2-render-classify-register.md) (Stage 2),
+[`HANDOFF-stage3-text-summaries.md`](HANDOFF-stage3-text-summaries.md) (Stage 3 design) +
+[`HANDOFF-stage3-run-ds09-12.md`](HANDOFF-stage3-run-ds09-12.md) (Stage 3 run handoff — current 4-dataset state),
+[`HANDOFF-stage4-image-vision.md`](HANDOFF-stage4-image-vision.md) (Stage 4 — built 2026-06-19).
 
 ---
 
@@ -70,6 +74,75 @@ multi‑job splitting before using `--batch` on a full dataset.
 
 ---
 
+## Update — DataSet-09 Stage 2 + vision-routing decisions (2026-06-18)
+
+Stage 2 ran on **DataSet-09** (528,995 PDFs, clean finish, 0 errored/0 no-sidecar). Findings below amend
+§1/§2/§3/§4/§5/§6/§7 and are **requirements for downstream (Stages 4–7) builders**.
+
+**The corpus is almost entirely scanned images + an OCR text layer.** `is_full_page_image` is **True on ~93%
+of pages**, and `max_image_coverage` is a near-constant **0.9778** — i.e. *every* page is a full-page scan,
+and the routing turns entirely on **text sufficiency** (OCR `char_count` vs `min_chars=40`), not on image
+coverage. Do **not** use `is_full_page_image`/`max_image_coverage` as an "is this a picture" signal — they
+are ~constant here.
+
+**Measured vision fraction (DS09, from the manifest's 449,403 rendered PDFs = ~85% of corpus):** of 878,118
+pages — **`image` 7.8%** (68,197), `mixed` 0.6% (5,522), `text` 91.6% (804,194), `blank` 205, `redacted` 0.
+`low_quality_text` **1.8%** (15,699). `vision_workload` (image pages + kept artifacts) = **111,072**; artifacts
+kept 42,875. Whole-set ≈ image ~80k, vision_workload ~130k (exact whole-set needs the §7 pruned-parallel
+sidecar tally — manifest excludes the 79,579 first-batch PDFs skipped on resume).
+
+**~63% of `image` pages are NOT useful pictures.** The `full_page_image_low_text` class (coverage == 0.9778)
+is dominated by **blank scans, broken-image placeholders** (email/web→PDF with linked/missing images), and
+**exhibit slip-sheets** ("Exhibit C"). A minority are real photos (some under a redaction box). **Operator
+decision (2026-06-18): be OVER-inclusive — do NOT pre-filter these.** Let Stage 4 caption them; the caption
+itself states "blank/no content."
+- **Requirement (Stage 7):** must accept a vision caption indicating blank/no-content and **correct the
+  sidecar** for that page (e.g. demote `page_kind`→`blank`, drop/flag the empty `image_asset`).
+- If pre-filtering is ever wanted: within the 0.9778 class, `dark_coverage < 0.01` cleanly flags ~50% as
+  blank at zero cost (do NOT apply that rule to the `<0.5`-coverage embedded-photo class — small photos read
+  as low-dark).
+
+**Over-inclusive vision routing = Option A (adopted, amends §3 routing table + §4 + §7).** Stage 4's input
+set is **`image ∪ mixed ∪ low_quality_text`** (≈**10%** of pages: 7.8 + 0.6 + 1.8), **not** image-only.
+Rationale: `mixed` carries real figures and `low_quality_text` is poor-OCR/handwriting that vision recovers —
+both cheap to add (~+33% vision pages). `mixed` and `low_quality_text` pages still keep their canonical text;
+they are *added* to the vision set, not removed from the text lane.
+
+**Known classifier false-negative (amends §4; not fixed).** A full-page image with an **overlaid** OCR/
+annotation text layer (`char_count ≥ min_chars`) matches neither the `image` rule nor `mixed` → it falls to
+`text` and never reaches vision. Empirically **rare in DS09** (0 of 200 random `text` pages were photographs;
+95% upper bound ≈ 1.5%). The `dark/ink_coverage` metrics are **null on `text` pages** (Stage 1 only computes
+them for image candidates), so this can't be caught from metadata — only by rendering pixels. Option A's
+`low_quality_text` inclusion catches the handwriting subset; the photo-with-overlay subset is accepted as a
+small known miss.
+
+**Caption AND description (amends §4/§6 schema).** Stage 4 emits BOTH per image asset in one gpt-5-mini call:
+a short **`caption`** and a longer **`visual_description`**, plus safety tags + embedding. The §6 / Stage-2
+§7 schemas previously named only `caption`; add **`image_assets[].description`** (a.k.a. `visual_description`).
+
+**Staging reality — NOT 100% page renders; corpus now UNIFORM (amends §5 + Stage-2 §1/§5).** DS09 ran
+`--no-stage-pages` for 449,403 of 528,995 PDFs (image pages + artifacts + thumbnails only; the first 79,579
+were full-staged). Two post-passes on **2026-06-18** then made the corpus uniform (new Stage-2 CLI modes —
+see Stage-2 spec / `src/stage2/escalate.py`):
+- **`--escalate-vision`** rendered the **27,141 `low_quality_text` pages** (8,666 PDFs) into `images/` and
+  registered them in `image_assets[]` with **`route_reason:"low_quality_text"`** — forward-filling the
+  Option-A vision set so Stage 4 has every vision page materialized.
+- **`--purge-staged-pages --confirm`** deleted **all `<name>/pages/`** display renders (73,964 dirs / 314,226
+  PNGs / 68.6 GB reclaimed) and nulled the 302,737 dangling non-image `render_path`s.
+
+Resulting state every downstream stage can rely on:
+- **`images/` (image pages + low_quality_text) + `artifacts/` + `thumbnail.png` are fully staged** for the
+  whole corpus → Stage 4 has its complete Option-A vision set. **No `pages/` exists anywhere.**
+- **Stage 7 must render `text`/`mixed` display PNGs on ingest** for the *entire* corpus (none are staged);
+  non-image `render_path` is `null` everywhere.
+
+**gpt-5-mini cost notes (image line).** A full-page image bills ~**2,490 tokens** (1,536-patch cap × 1.62
+multiplier). **Downsampling 200→150 DPI saves nothing** — both exceed the 1,536-patch cap and rescale to it;
+you must go **below ~130 DPI** to cut tokens (legibility risk). **Batch API = 50% off.** Whole-set Option A
+vision ≈ **~$130 realtime / ~$65 batched** (input-dominated; output adds on top).
+
+---
+
 ## 0. Why this exists
 
 We are ingesting multi-hundred-thousand–page litigation productions (Epstein DataSet‑11/12, etc.) into
@@ -115,7 +188,8 @@ every page; a dedicated safety call per page.
 
 Computed from Stage‑1 metrics (`max_image_coverage`, `is_full_page_image`, text sufficiency, blank/
 redaction signals). Finalized at render time (Stage 2) and written to the JSON. **This single field
-decides what, if anything, needs vision.**
+decides what, if anything, needs vision.** *(Amended 2026-06-18: the DS09 vision set is over-inclusive —
+`image ∪ mixed ∪ low_quality_text`, not image-only. See the DataSet-09 update above.)*
 
 | `page_kind` | Definition | Vision? | Notes |
 |---|---|---|---|
@@ -136,7 +210,7 @@ decides what, if anything, needs vision.**
 | **1** ✅ | Text-first extraction | none | PDF | `<name>.json` (verbatim text, `[REDACTED]`, metrics, routing) |
 | **2** | Render + classify + register | none | PDF + S1 JSON | page PNGs, image-asset files, artifacts, thumbnail; JSON gains `page_kind`, `image_assets[]` |
 | **3** | Text summaries | gpt‑4.1‑nano | page text | JSON gains per-page `summary`/`summary_json` + `text_safety`; **provisional** doc summary |
-| **4** | Image-asset processing | gpt‑5‑mini + AI Vision + Content Safety | image assets + artifacts | JSON gains image **captions**, image **safety**, image **embeddings**; (skips blank/redacted) |
+| **4** | Image-asset processing | gpt‑5‑mini + AI Vision + Content Safety | image assets + artifacts (`image ∪ mixed ∪ low_quality_text`, per 2026-06-18 update) | JSON gains image **captions + descriptions**, image **safety**, image **embeddings**; (skips blank/redacted) |
 | **5** | Finalize doc summary | gpt‑4.1‑nano | page text + image captions | JSON gains **final** document summary |
 | **6** | Chunk + embed (staging) | text‑embedding‑3 | final text + captions | staged chunk + vector files |
 | **7** | **Specialized ingestion → system** | (load) | all staged artifacts | **Azure Storage uploads + Postgres writes + events** |
@@ -149,15 +223,17 @@ Stages 1–6 are local staging; **Stage 7 is the only step that writes to Azure 
 <dir>/<name>.pdf
 <dir>/<name>.json                 # the evolving sidecar (extended each stage)
 <dir>/<name>/
-    images/      page-<NNNN>.png            # page_kind = image  (these ARE image assets)
+    images/      page-<NNNN>.png            # vision assets: page_kind=image + escalated low_quality_text pages
     artifacts/   page-<NNNN>-img-<MM>.png   # embedded sub-image photos
-    pages/       page-<NNNN>.png            # display renders for text/mixed pages (optional; see Stage-2 §)
+    pages/       page-<NNNN>.png            # display renders for text/mixed pages — DEFERRED to Stage 7 by
+    #                                         default; PURGED entirely on DS09 (2026-06-18). See DS09 update.
     thumbnail.png                           # ONE per PDF asset (no per-page thumbnails)
 ```
 - `NNNN` = 1-based zero-padded page number; `MM` = zero-padded image index on that page.
 - Thumbnails are **per asset** (PDF, audio, video) — never per page.
 - The JSON `image_assets[]` is the manifest of everything that becomes a standalone image asset
-  (image-pages + photo artifacts), each with a **relative path**.
+  (image-pages + photo artifacts + **escalated `low_quality_text` pages**, the last tagged
+  `route_reason:"low_quality_text"`), each with a **relative path**.
 
 ## 6. Sidecar JSON evolution
 
@@ -166,7 +242,7 @@ The Stage‑1 sidecar is **extended in place** by each stage (never rewritten de
 - **Stage 1:** `pages[].text.content` (verbatim, `[REDACTED]`), `metrics`, `redaction`, routing.
 - **Stage 2:** `pages[].page_kind`, `pages[].render_path`, top-level `image_assets[]`, `thumbnail_path`.
 - **Stage 3:** `pages[].summary` + `summary_json` (text/mixed only) + `text_safety`; `document_summary` (provisional).
-- **Stage 4:** `image_assets[].caption` + `safety` + `embedding_ref`.
+- **Stage 4:** `image_assets[].caption` + **`description`** (visual_description) + `safety` + `embedding_ref`.
 - **Stage 5:** `document_summary` finalized (covers all pages incl. vision captions).
 - **Stage 6:** `chunks[]` + embedding references (or a sibling staged file).
 
