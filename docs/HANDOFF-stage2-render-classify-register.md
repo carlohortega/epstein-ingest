@@ -12,6 +12,36 @@ disk, no Azure / no DB**. This produces the staged inputs that Stage 4 (vision) 
 
 ---
 
+## Update — built & run; DataSet-09 reality (2026-06-18)
+
+Stage 2 is **implemented** (`src/stage2`) and has run on DataSet‑09 (528,995 PDFs, 0 errored). This amends
+several "requirements" below to match how it actually behaves and what this corpus looks like:
+
+- **"Render *every* page" (§1/§5) is now optional.** A `--no-stage-pages` mode renders **only `image` pages**
+  (+ artifacts + thumbnails) and **defers `text`/`mixed`/`blank`/`redacted` renders to Stage 7**. DS09 ran
+  `--no-stage-pages` for **449,403 of 528,995** PDFs. **After the post-passes below the corpus is UNIFORM: no
+  `<name>/pages/` exists anywhere, `render_path` is `null` for every non-image page, and Stage 7 renders the
+  display PNGs on ingest for the whole corpus.** `images/`, `artifacts/`, `thumbnail.png` are always staged.
+- **Two new idempotent post-pass CLI modes (`src/stage2/escalate.py`):**
+  - **`--escalate-vision`** renders `low_quality_text` pages to `<name>/images/` and registers them in
+    `image_assets[]` as `kind:"page", route_reason:"low_quality_text"` — forward-fills the over-inclusive
+    vision set after a `--no-stage-pages` run. DS09: 27,141 pages / 8,666 PDFs; `stage2-escalate-manifest.json`.
+  - **`--purge-staged-pages [--confirm]`** deletes the deferred `<name>/pages/` display renders (dry-run
+    unless `--confirm`) and nulls dangling non-image `render_path`/`render_dpi`. DS09: 73,964 dirs /
+    314,226 PNGs / 68.6 GB; `stage2-purge-pages-manifest.json`. Never touches `images/`/`artifacts/`/`thumbnail.png`.
+- **The corpus is ~all scanned image + OCR text layer:** `is_full_page_image` True on ~93% of pages,
+  `max_image_coverage` ≈ constant **0.9778**. Classification turns on **text sufficiency only** — coverage/
+  `is_full_page_image` are NOT discriminating here.
+- **`image` is ~7.8% of pages**, but **~63% of `image` pages are blank/broken/slip-sheet** (the
+  `full_page_image_low_text`/0.9778 class). Operator decision: **stay over-inclusive, don't pre-filter**; let
+  Stage 4 caption them and Stage 7 correct the sidecar from the caption.
+- **Vision routing is over-inclusive (Option A):** Stage 4 set = **`image ∪ mixed ∪ low_quality_text`**
+  (≈10% of pages), not image-only — amends §4's "only `image` … require vision" and §9 acceptance #3.
+- **Caption AND description:** Stage 4 stores both `image_assets[].caption` and `image_assets[].description`.
+- Full detail + cost/DPI notes live in the STRATEGY doc's **"Update — DataSet-09 Stage 2"** section.
+
+---
+
 ## 1. Scope
 
 **In scope:**
@@ -85,8 +115,19 @@ Per page, first match wins. All thresholds tunable and echoed into the JSON.
 **Only `page_kind == image` pages require vision (Stage 4).** `blank` and `redacted` never do. `text`/`mixed`
 never do (their text is canonical; figures get image-embeddings, not captions, unless escalated later).
 
+> **Amended 2026-06-18 (DS09):** vision routing is now **over-inclusive** — `image ∪ mixed ∪
+> low_quality_text` — so `mixed` figures and poor-OCR/handwriting pages *are* sent to vision (while keeping
+> their canonical text). See the top-of-doc update.
+
 > This supersedes Stage‑1’s `needs_vision` *for vision routing*: a redacted page **with a usable text layer**
 > is `text`/`mixed`, not `image`, so it is **not** sent to vision.
+
+> **Known false-negative (not fixed):** a **full-page image with an overlaid OCR/annotation text layer**
+> (`char_count ≥ min_chars`) matches neither rule 3 (`image` needs `char_count < min_chars`) nor rule 4
+> (`mixed` needs coverage `< full_page_threshold`) → it falls to rule 5 `text` and never reaches vision.
+> Empirically rare on DS09 (0 of 200 random `text` pages were photos; ≤~1.5%). `dark/ink_coverage` are null
+> on `text` pages, so it can't be caught from metadata — only by rendering pixels. Accepted as a small miss;
+> the `low_quality_text` inclusion above recovers the handwriting subset.
 
 ---
 
@@ -132,7 +173,9 @@ Add at the top level:
     "width_px": 2550, "height_px": 3300, "coverage": 0.98 },
   { "kind": "artifact", "page_number": 12, "image_index": 1,
     "path": "<name>/artifacts/page-0012-img-01.png", "content_sha": "…",
-    "width_px": 900, "height_px": 1200, "occurrences": [{ "page_number": 12, "image_index": 1 }] }
+    "width_px": 900, "height_px": 1200, "occurrences": [{ "page_number": 12, "image_index": 1 }] },
+  { "kind": "page",     "page_number": 3,  "path": "<name>/images/page-0003.png",
+    "width_px": 1700, "height_px": 2200, "route_reason": "low_quality_text" }  // added by --escalate-vision
 ],
 "stage2": {
   "tool_version": "…", "generated_at_utc": "…",
@@ -140,8 +183,10 @@ Add at the top level:
   "counts": { "pages_rendered": 183, "image_pages": 8, "artifacts": 14, "artifacts_skipped": 3 }
 }
 ```
-- `image_assets[]` is **the** manifest Stage 4 iterates (image-pages + photo artifacts), all **relative paths**.
-- `blank`/`redacted` pages are rendered (to `pages/`) but are **not** added to `image_assets[]`.
+- `image_assets[]` is **the** manifest Stage 4 iterates (image-pages + photo artifacts + escalated
+  `low_quality_text` pages, the last carrying `route_reason`), all **relative paths**.
+- `blank`/`redacted`/`text`/non-escalated-`mixed` pages are **not** in `image_assets[]`. Their display
+  renders are deferred to Stage 7 (and on DS09 the staged `pages/` were purged 2026-06-18 — see top update).
 
 ---
 

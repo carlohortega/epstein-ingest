@@ -46,6 +46,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--progress-every", type=int, default=2000,
                    help="print a progress line every N completed PDFs (0 = silent until done); "
                         "useful for tailing the log on large corpora")
+    p.add_argument("--escalate-vision", action="store_true",
+                   help="POST-PASS (not a normal run): render low_quality_text pages to images/ and register "
+                        "them in image_assets[] — forward-fills the over-inclusive vision set after a "
+                        "--no-stage-pages run. Idempotent; needs an existing stage2 block per PDF.")
+    p.add_argument("--purge-staged-pages", action="store_true",
+                   help="POST-PASS: delete the deferred <name>/pages/ display renders (regenerated at Stage 7 "
+                        "on ingest); keeps images/ artifacts/ thumbnail.png. DRY-RUN unless --confirm.")
+    p.add_argument("--confirm", action="store_true",
+                   help="with --purge-staged-pages: actually delete (default prints a dry-run report only).")
     p.add_argument("--version", action="version", version=f"{STAGE2_TOOL_NAME} {STAGE2_TOOL_VERSION}")
 
     g = p.add_argument_group("thresholds (Handoff §4/§5/§6) — all echoed into stage2.config")
@@ -77,6 +86,26 @@ def main(argv: list[str] | None = None) -> int:
 
     s2cfg = config_from_args(args)
     generated_at = args.generated_at or _utc_now_iso()
+
+    if args.escalate_vision:
+        from .escalate import run_escalate
+        m = run_escalate(args.root, s2cfg, generated_at, workers=args.workers,
+                         progress_every=args.progress_every or 5000)
+        print(f"escalate-vision: {m['pdfs_escalated']} pdfs escalated, {m['pages_rendered']} low_quality_text "
+              f"pages rendered to images/ ({m['pdfs_seen']} seen, {m['errors']} errors) "
+              f"in {m['wall_clock_seconds']}s")
+        return 0
+
+    if args.purge_staged_pages:
+        from .escalate import run_purge
+        m = run_purge(args.root, workers=args.workers, delete=args.confirm)
+        tag = "DELETED" if args.confirm else "DRY-RUN (nothing deleted; pass --confirm to delete)"
+        print(f"purge-staged-pages [{tag}]: {m['pdfs_with_pages_dir']} pdfs have a pages/ dir, "
+              f"{m['page_png_files']} PNGs = {m['gb']} GB reclaimable; "
+              f"dirs_deleted={m['dirs_deleted']}, render_paths_nulled={m['render_paths_nulled']} "
+              f"in {m['wall_clock_seconds']}s")
+        return 0
+
     m = run(args.root, s2cfg, generated_at, force=args.force, workers=args.workers,
             progress_every=args.progress_every)
 
