@@ -17,7 +17,7 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 
-from ..stage1.walk import find_pdfs, dump_json, sidecar_path
+from ..stage1.walk import dump_json, sidecar_path
 from . import STAGE3_TOOL_NAME, STAGE3_TOOL_VERSION, PROMPT_VERSION
 from .config import Stage3Config
 from .client import Stage3CallError, estimate_cost_usd
@@ -32,6 +32,22 @@ _AGG_KEYS = ("pages_summarized", "pages_skipped", "pages_errored", "low_confiden
              "content_filtered", "doc_summary_calls", "prompt_tokens", "completion_tokens",
              "cached_tokens", "calls")
 _ACTIONS = ("summarized", "skipped_done", "skipped_status", "no_sidecar", "no_stage2", "error")
+
+
+def _find_pdfs_pruned(root: str) -> list[str]:
+    """Like stage1.walk.find_pdfs but PRUNES the per-PDF output dirs (``<stem>/`` with a sibling
+    ``<stem>.pdf``, and the ``images/pages/artifacts`` subdirs) so a processed corpus doesn't make
+    os.walk descend into hundreds of thousands of PNG dirs (the flat-DS-09 slow-walk; Handoff §4.3/§9).
+    PDFs never live inside those dirs, so the result is identical to find_pdfs — just fast."""
+    out: list[str] = []
+    for dirpath, dirs, files in os.walk(root):
+        file_set = set(files)
+        dirs[:] = [d for d in dirs
+                   if d not in ("images", "pages", "artifacts") and (d + ".pdf") not in file_set]
+        for fn in files:
+            if fn.lower().endswith(".pdf"):
+                out.append(os.path.join(dirpath, fn))
+    return sorted(out)
 
 
 def _page_task(client, state: DocState, idx: int, cfg: Stage3Config):
@@ -54,7 +70,7 @@ def run(root: str, cfg: Stage3Config, generated_at: str, *, client, provenance: 
         progress_every: int = _DEFAULT_PROGRESS_EVERY, content_filter_log: str | None = None) -> dict:
     root = os.path.abspath(root)
     started = time.monotonic()
-    pdfs = find_pdfs(root)
+    pdfs = _find_pdfs_pruned(root)
     total = len(pdfs)
     workers = workers or cfg.concurrency
     cf_log_path = content_filter_log or faillog.default_path(root)
@@ -195,7 +211,7 @@ def dry_run(root: str, cfg: Stage3Config) -> dict:
     per-page token estimate (from char_count, capped at max_input_chars) + one reduce per eligible doc."""
     root = os.path.abspath(root)
     pages = docs_with_text = est_in = est_out = 0
-    for p in find_pdfs(root):
+    for p in _find_pdfs_pruned(root):
         try:
             import json
             with open(sidecar_path(p), "r", encoding="utf-8") as f:
