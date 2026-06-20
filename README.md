@@ -3,7 +3,25 @@
 A staged PDF ingestion pipeline (sv-kb). Each stage is a self-contained subpackage of the
 `src` package with its own CLI — **stage1** (text-first pre-extraction, below),
 **stage2** (render / classify `page_kind` / register image assets), **stage3** (nano summaries +
-safety triage). The sections below cover each stage in order.
+safety triage), **stage4** (image-asset vision), **stage5** (finalize document summary), and
+**stage6** (chunk for retrieval). Stage 7 (embed + index) is deferred. The sections below cover each
+stage in order.
+
+## Pipeline status (datasets)
+
+Per-dataset processing state. Stages 1–5 are LLM/render stages; **Stage 6 is chunk-only (local, $0)**;
+Stage 7 (embed + index) is not built yet.
+
+| Dataset | S1 | S2 | S3 | S4 | S5 | S6 | S7 |
+|---|---|---|---|---|---|---|---|
+| **DS-09** (flat, ~529k) | ✅ | ✅ uniform end-state | ⬚ not started | ⬚ | ⬚ | ⬚ | — |
+| **DS-10** (504 folders, ~503k) | ✅ | ✅ | ✅ 504/504 | ⬚ not started | ⬚ | ⬚ | — |
+| **DS-11** (332 folders, ~332k) | ✅ | ✅ | ✅ | ✅ 3,284 imgs | ✅ done ($0.17) | ⬚ ready | — |
+| **DS-12** (1 folder, 152) | ✅ | ✅ | ✅ | ✅ | ✅ done (152 docs) | ✅ done (canary) | — |
+
+✅ done · ⬚ pending · — n/a (stage not built). **Stage 6** was built this cycle and validated on the
+**DS-12 canary** (152 docs → 1,727 parents / 3,824 children, ~1.3 s, $0); **DS-11 is Stage-6-ready** (one
+local pass, minutes). DS-09/DS-10 reach Stage 6 after their earlier LLM stages complete.
 
 ## Stage 1 — text-first pre-extraction
 
@@ -254,6 +272,39 @@ redoes), fault-isolated, realtime-only.
 python tests/run_stage5_tests.py   # offline (fake nano client)
 ```
 
+## Stage 6 — chunk for retrieval (chunk-only; embedding deferred to Stage 7)
+
+Stage 6 (`src.stage6`, spec: `docs/HANDOFF-stage6-chunk.md`) turns the document **body** into retrieval
+**chunks** by reusing sv-kb's production chunker **verbatim** (`svkb_pipeline.chunking.chunk_pages` +
+`parents_to_dicts`). It is **parent–child**: parent chunks (≈500/650 tok, handed to the LLM at generation)
+and child chunks (≈125/150 tok, embedded + retrieved), each child carrying a Contextual-Retrieval
+`context_prefix` and a `content_sha`. Output is a sibling **`<name>.chunks.json`** (the exact artifact the
+live `indexer-job` consumes) referenced from a new `stage6` block.
+
+The bar is **chunks indistinguishable from what sv-kb would produce**, so the per-page input replicates
+sv-kb's `consolidate.py` exactly: each text-layer page's markdown is `f"## Transcription\n\n{text}"` (the
+heading is load-bearing — it sets every child's `Section: Transcription`), with `brief_description=""` and
+`embedding_model="text-embedding-3-small"` (the sv-kb defaults — **not** the Stage-5 summary), and the
+identifiers (`document_name`/`case_key`/`dataset_key`, derived from the path) that feed `content_sha`.
+
+```bash
+python -m src.stage6 <ROOT> [flags]      # chunk every doc under ROOT; no Stage 3/4/5 data dependency
+python -m src.stage6 <ROOT> --dry-run    # exact page/parent/child counts, writes nothing
+```
+
+**Chunk-only:** Stage 6 makes **zero API calls**, needs **no Azure creds**, and writes no DB/Storage
+(that is Stage 7). Two documented fidelity calls (stamped into every `stage6` block): page text is the
+Stage-1 redaction-scrubbed text (`text_source:"stage1-scrubbed"`, never leaks under-bar content), and
+pages with **no text layer are skipped** (`image_page_policy:"skip-no-text"` — sv-kb would feed a vision
+transcription; our caption-only Stage 4 has nothing faithful to feed). **Append-only** (new `stage6` block
++ sibling `chunks.json`, Stages 1–5 untouched), idempotent/resumable (`--force` re-chunks), fault-isolated.
+On Windows, run via `C:\epstein-ingest\run_stage6.py` (puts the repo **and** `sv-kb/pipeline/shared` on
+`sys.path`; loads no `AZURE_*`).
+
+```bash
+python tests/run_stage6_tests.py   # offline (asserts byte-identity to sv-kb's chunk_pages)
+```
+
 ## Layout
 
 ```
@@ -310,4 +361,10 @@ src/
     process.py       per-doc gate, append-only finalize (document_summary_final + stage5 block)
     walk.py          per-document realtime scheduler, dry-run breakdown, stage5 run manifest
     cli.py           argparse entry point (python -m src.stage5)
+  stage6/          Stage 6 — chunk for retrieval (reuses sv-kb chunk_pages verbatim; chunk-only, $0)
+    config.py        Stage6Config (concurrency only — no model/rate/Azure: chunk-only)
+    chunk.py         sv-kb chunker import, path→identifier derivation, ## Transcription page assembly
+    process.py       per-doc gate, append-only finalize (sibling chunks.json + stage6 block)
+    walk.py          per-document thread-pool scheduler, dry-run counts, stage6 run manifest
+    cli.py           argparse entry point (python -m src.stage6)
 ```
