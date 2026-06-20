@@ -44,6 +44,20 @@ stage2-run-manifest.json
 stage3-run-manifest.json
 stage3-batch-state.json
 *.tmp
+# Summary scanner outputs + incremental cache (written next to data roots).
+dataset-summary.json
+dataset-summary.md
+dataset-summary.html
+corpus-summary.json
+corpus-summary.md
+corpus-summary.html
+quarantine-list.json
+.summary-cache.json
+# Stage-7 staged vector store (written next to data roots).
+.embeddings/
+# Guard: real datasets live OUTSIDE the repo (C:\Projects\Data\epstein); never commit a DataSet-*/ tree
+# that lands in the repo by accident (e.g. a stray test corpus).
+/DataSet-*/
 
 # ---- Editor / OS ------------------------------------------------------------
 .vscode/
