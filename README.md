@@ -201,6 +201,59 @@ with `--no-skip-low-quality-text`).
 PYTHONPATH=. ~/repos/sv-kb/pipeline/shared/.venv/bin/python tests/run_stage3_tests.py   # offline (fake client)
 ```
 
+## Stage 4 — image-asset vision (caption / gate / embeddings / content safety)
+
+Stage 4 (`src.stage4`, spec: `docs/HANDOFF-stage4-image-vision.md`) is the **vision lane**. For every entry
+in a sidecar's `image_assets[]` (image pages ∪ photo artifacts ∪ escalated `low_quality_text` pages) it
+runs a cheap **local Tier-1 pre-gate** that drops provably-blank scans for free, then **one bundled
+gpt-5-mini vision call** returning `caption` + `description` + a content verdict — `content_class` +
+**`has_visual_content`** (the gate) — + `vision_confidence` + image `safety` tags. For kept assets
+(`has_visual_content=true`) it adds an **Azure AI Vision image embedding**; on photo artifacts it runs
+**Azure Content Safety** (the CSAM net). It extends the sidecar (`image_assets[].{…}` + a `stage4` block);
+local only, no DB.
+
+```bash
+python -m src.stage4 <ROOT> [flags]      # after Stages 1–2 (needs image_assets[] from Stage 2)
+python -m src.stage4 <ROOT> --dry-run    # project eligible assets / tokens / cost, no API calls
+```
+
+The headline output is the **`has_visual_content` gate** — the single downstream source of truth that keeps
+blanks / broken placeholders / slip-sheets from ever becoming image assets, and that **Stage 5 reads to
+decide fusion**. Idempotent/resumable per asset, fault-isolated; the api keys are env-only.
+
+```bash
+python tests/run_stage4_tests.py   # offline (fake vision/embedding/scanner clients)
+```
+
+## Stage 5 — finalize the document summary (text + vision fusion)
+
+Stage 5 (`src.stage5`, spec: `docs/HANDOFF-stage5-finalize-summary.md`) **fuses the Stage-3 text lane and
+the Stage-4 vision lane into the final document summary**, as cheaply as possible. Per document it routes on
+`has_visual_content` (pages **and** artifacts — never `page_kind`) and whether Stage 3 produced text:
+
+- **text-only** (text, no kept vision) → **promote** Stage 3's provisional summary to final — **no LLM call**;
+- **fused** (text + vision) → **one gpt-4.1-nano reduce** over the page-ordered page summaries **+** image
+  captions/descriptions;
+- **image-only** (vision, no text) → one nano reduce over captions/descriptions only (the doc's first summary);
+- **no content** (neither) → the deterministic sentinel **`"No readable content."`**.
+
+```bash
+python -m src.stage5 <ROOT> [flags]      # run LAST, after Stages 3 AND 4 are frozen for the dataset
+python -m src.stage5 <ROOT> --dry-run    # promote/fuse/image-only/no-content breakdown + nano $, no API
+```
+
+**Append-only:** Stage 5 writes a new `document_summary_final` + a `stage5` block (with a `consumed`
+provenance stamp of the Stage-3/Stage-4 versions it finalized over) and **never overwrites** Stage 3's
+provisional `document_summary`. It reuses the Stage-3 nano client / rate-limiter / cost plumbing unchanged.
+A doc-level **safety rollup** folds every text/image `review` flag + any `content_filtered` into
+`document_summary_final.safety` so the quarantine routes downstream; a (rare) content-filtered reduce is
+logged to `content-filter-failures.json`. Idempotent/resumable (skips docs with a `stage5` block; `--force`
+redoes), fault-isolated, realtime-only.
+
+```bash
+python tests/run_stage5_tests.py   # offline (fake nano client)
+```
+
 ## Layout
 
 ```
@@ -237,4 +290,24 @@ src/
     batch.py         Azure Batch API path (two rounds: pages then doc summaries) + resume state
     faillog.py       content-filter-failures.json writer (merge/dedup across runs)
     cli.py           argparse entry point (python -m src.stage3)
+  stage4/          Stage 4 — gpt-5-mini image-asset vision + embeddings + content safety
+    config.py        Stage4Config knobs (model, pre-gate thresholds, embeddings/CS toggles, rates)
+    prompts.py       byte-identical vision system prompt + strict verdict schema + message builder
+    connection.py    Azure vision / embedding / Content-Safety connections from env (keys env-only)
+    client.py        realtime gpt-5-mini vision client (requests + retry/backoff), usage/cost
+    pregate.py       Tier-1 local blank/black pre-gate (no API) — the free filter
+    assets.py        per-asset chain: pre-gate → vision verdict → embedding → content safety
+    embed.py         Azure AI Vision multimodal image embedding (has_visual_content assets)
+    safety.py        Azure Content Safety image scan (the CSAM net, photo artifacts)
+    process.py       per-doc gate, AssetState, apply_outcome, finalize (extends sidecar)
+    walk.py          realtime scheduler, pruned PDF walk, dry-run preview, stage4 run manifest
+    faillog.py       content-filter-failures.json writer (reused format)
+    cli.py           argparse entry point (python -m src.stage4)
+  stage5/          Stage 5 — finalize document summary (text + vision fusion, gpt-4.1-nano)
+    config.py        Stage5Config knobs (model/determinism, reduce fan-in, rates, concurrency)
+    prompts.py       byte-identical fusion system prompt + strict {summary} schema + message builder
+    fuse.py          routing, page-ordered text+caption interleave, hierarchical reduce, safety rollup
+    process.py       per-doc gate, append-only finalize (document_summary_final + stage5 block)
+    walk.py          per-document realtime scheduler, dry-run breakdown, stage5 run manifest
+    cli.py           argparse entry point (python -m src.stage5)
 ```
