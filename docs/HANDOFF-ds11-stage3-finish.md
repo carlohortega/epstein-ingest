@@ -1,7 +1,8 @@
 # Handoff: Finish Stage 3 on DataSet-11 (the deferred ~48%)
 
-**Status:** operational handoff — **not yet run.** DS-11 Stage 3 is **~52% complete** (173 of 332
-`IMAGES\NNNN` subfolders). This doc is for the session that finishes the remaining **159 subfolders**.
+**Status:** ✅ **DONE (2026-06-19).** DS-11 Stage 3 is complete — all **332/332** `IMAGES\NNNN` subfolders
+have a `stage3-run-manifest.json` (verified). The procedure below is retained as the record of how the
+final 159 subfolders were finished. DS-11 Stage 4 is also done, so **DS-11 Stage 5 is now unblocked.**
 **Created:** 2026-06-19. **Companion:** [`HANDOFF-stage3-text-summaries.md`](HANDOFF-stage3-text-summaries.md)
 (what Stage 3 does) + [`HANDOFF-stage4-image-vision.md`](HANDOFF-stage4-image-vision.md) (the machine/env).
 

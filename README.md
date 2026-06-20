@@ -3,25 +3,29 @@
 A staged PDF ingestion pipeline (sv-kb). Each stage is a self-contained subpackage of the
 `src` package with its own CLI — **stage1** (text-first pre-extraction, below),
 **stage2** (render / classify `page_kind` / register image assets), **stage3** (nano summaries +
-safety triage), **stage4** (image-asset vision), **stage5** (finalize document summary), and
-**stage6** (chunk for retrieval). Stage 7 (embed + index) is deferred. The sections below cover each
-stage in order.
+safety triage), **stage4** (image-asset vision), **stage5** (finalize document summary),
+**stage6** (chunk for retrieval), and **embed** (Stage 7 — text child-chunk embeddings to a staged
+vector store). Stage 8 (`ingest`, the single live-system load) is deferred. The sections below cover
+each stage in order.
 
 ## Pipeline status (datasets)
 
 Per-dataset processing state. Stages 1–5 are LLM/render stages; **Stage 6 is chunk-only (local, $0)**;
-Stage 7 (embed + index) is not built yet.
+**Stage 7 (embed)** is API-bound but cheap (text-embedding-3-small ≈ $0.02/1M tok, dedup-global); Stage 8
+(ingest) is not built yet.
 
 | Dataset | S1 | S2 | S3 | S4 | S5 | S6 | S7 |
 |---|---|---|---|---|---|---|---|
-| **DS-09** (flat, ~529k) | ✅ | ✅ uniform end-state | ⬚ not started | ⬚ | ⬚ | ⬚ | — |
-| **DS-10** (504 folders, ~503k) | ✅ | ✅ | ✅ 504/504 | ⬚ not started | ⬚ | ⬚ | — |
-| **DS-11** (332 folders, ~332k) | ✅ | ✅ | ✅ | ✅ 3,284 imgs | ✅ done ($0.17) | ⬚ ready | — |
-| **DS-12** (1 folder, 152) | ✅ | ✅ | ✅ | ✅ | ✅ done (152 docs) | ✅ done (canary) | — |
+| **DS-09** (flat, ~529k) | ✅ | ✅ uniform end-state | ⬚ not started | ⬚ | ⬚ | ⬚ | ⬚ |
+| **DS-10** (504 folders, ~503k) | ✅ | ✅ | ✅ 504/504 | ⬚ not started | ⬚ | ⬚ | ⬚ |
+| **DS-11** (332 folders, ~332k) | ✅ | ✅ | ✅ | ✅ 3,284 imgs | ✅ done ($0.17) | ✅ done (1.25M ch) | ⬚ ready |
+| **DS-12** (1 folder, 152) | ✅ | ✅ | ✅ | ✅ | ✅ done (152 docs) | ✅ done (canary) | ✅ done (canary) |
 
-✅ done · ⬚ pending · — n/a (stage not built). **Stage 6** was built this cycle and validated on the
-**DS-12 canary** (152 docs → 1,727 parents / 3,824 children, ~1.3 s, $0); **DS-11 is Stage-6-ready** (one
-local pass, minutes). DS-09/DS-10 reach Stage 6 after their earlier LLM stages complete.
+✅ done · ⬚ pending · — n/a. **Stage 6** was validated on the **DS-12 canary** (152 docs → 1,727 parents /
+3,824 children, ~1.3 s, $0). **Stage 7 (embed)** was built this cycle, validated offline (acceptance tests),
+and run on the **DS-12 canary** (3,824 children → **3,814 unique** content_sha embedded, 23 s, **~$0.01**,
+1536-d store = 23.6 MB; resume re-run embeds 0). **DS-11 is embed-ready** (≈ 1.25M children pre-dedup,
+ceiling ≈ $3 — dedup cuts it). DS-09/DS-10 reach Stage 6/7 after their earlier LLM stages complete.
 
 ## Stage 1 — text-first pre-extraction
 
@@ -305,6 +309,40 @@ On Windows, run via `C:\epstein-ingest\run_stage6.py` (puts the repo **and** `sv
 python tests/run_stage6_tests.py   # offline (asserts byte-identity to sv-kb's chunk_pages)
 ```
 
+## Stage 7 — embed (text child-chunk embeddings → staged vector store)
+
+Stage 7 (`src.embed`, spec: `docs/HANDOFF-stage7-embed.md`) turns the staged **child** chunks (from every
+`<name>.chunks.json`) into **text embeddings** and stages them on disk as a **`content_sha`-keyed float32
+vector store** — it writes **nothing** to Postgres/Azure Storage (that is Stage 8). It is the one shared,
+API-bound step between chunking and ingestion, decoupled so embedding can run resumably over hours while the
+DB load stays a fast, transactional pass.
+
+The fidelity core: the embed input is **`f"{context_prefix} {text}"`** (context_prefix + ONE space + text —
+exactly what `svkb_pipeline.indexing` embeds, **not** `text` and **not** the `content_sha` preimage), and the
+**model/dimensions are locked** (`text-embedding-3-small`@`1536` — the model name is baked into every
+`content_sha`, and 1536 picks the `embedding_small` column). The store + run manifest stamp
+`embedding_model`/`dimensions`/`api_version` so a model change is detectable, and the store **refuses** to mix
+models/dims under one keyspace. **Children only** — parents are never embedded; image vectors stay with Stage
+4. The unique `content_sha` count (deduped **globally** across all sources) is the real workload and the cost
+lever.
+
+```bash
+python -m src.embed <ROOT> [--store DIR] [--model … --dimensions 1536] [-j N] [--rpm N --tpm N] [--force]
+python -m src.embed <ROOT> --dry-run    # unique-content_sha count + token/$ projection, NO API calls
+```
+
+The store is **256 append-log shards** (by `content_sha` prefix) of fixed-size `digest+float32[dims]` records
+(default `<ROOT>/.embeddings/`; ~6 KB/vector); the store **is** the resume state (a `content_sha` already
+present is skipped, `--force` re-embeds), and a crash loses at most an in-flight batch (a partial trailing
+record is truncated on the next write). Reuses sv-kb's embeddings URL/dims/api-version/batch conventions but
+wraps a Stage 3/4-style RPM/TPM limiter + deeper retry budget for a multi-hour bulk run. On Windows, run via
+`C:\epstein-ingest\run_embed.py` (loads `AZURE_*`; puts the repo **and** `sv-kb/pipeline/shared` on
+`sys.path`). Source-agnostic: consumes PDF and (future) media `chunks.json` identically.
+
+```bash
+python tests/run_embed_tests.py    # offline (injected fake provider; no network)
+```
+
 ## Layout
 
 ```
@@ -367,4 +405,12 @@ src/
     process.py       per-doc gate, append-only finalize (sibling chunks.json + stage6 block)
     walk.py          per-document thread-pool scheduler, dry-run counts, stage6 run manifest
     cli.py           argparse entry point (python -m src.stage6)
+  embed/           Stage 7 — text child-chunk embeddings → staged content_sha-keyed float32 vector store
+    config.py        EmbedConfig (locked model/dims, concurrency, RPM/TPM, batch, retries, cost rate)
+    connection.py    Azure OpenAI embeddings connection from env (key env-only; reuses MissingConnection)
+    provider.py      Azure embeddings client (requests + RPM/TPM limiter + deep retry/backoff)
+    collect.py       pruned *.chunks.json walk, parents_from_dicts, stream + GLOBAL content_sha dedup
+    store.py         256 append-log shards of digest+float32[dims]; resume seen-set; crash-safe; Stage-8 export
+    walk.py          batched embed scheduler (bounded window), dry-run projection, embed run manifest
+    cli.py           argparse entry point (python -m src.embed)
 ```

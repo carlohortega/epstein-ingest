@@ -205,17 +205,27 @@ decides what, if anything, needs vision.** *(Amended 2026-06-18: the DS09 vision
 
 ## 4. The stages (end-to-end)
 
-| Stage | Name | Model | Reads | Writes (local until 7) |
+**Design committed (2026-06-20):** Stage 6 is **chunk-only**; embedding is its **own** stage (**7 — embed**)
+and ingestion a **separate** stage (**8 — ingest**), single-responsibility. A parallel **media track**
+(audio/video/standalone images) feeds the **same** embed + ingest tail. See `HANDOFF-stage6-chunk.md`,
+`HANDOFF-stage7-embed.md`, `HANDOFF-stage8-ingest.md`, `HANDOFF-media-track.md`. Module names for the shared
+tail are functional: `src/embed`, `src/ingest`.
+
+| Stage | Name | Model | Reads | Writes (local until ingest) |
 |---|---|---|---|---|
 | **1** ✅ | Text-first extraction | none | PDF | `<name>.json` (verbatim text, `[REDACTED]`, metrics, routing) |
-| **2** | Render + classify + register | none | PDF + S1 JSON | page PNGs, image-asset files, artifacts, thumbnail; JSON gains `page_kind`, `image_assets[]` |
-| **3** | Text summaries | gpt‑4.1‑nano | page text | JSON gains per-page `summary`/`summary_json` + `text_safety`; **provisional** doc summary |
-| **4** | Image-asset processing | gpt‑5‑mini + AI Vision + Content Safety | image assets + artifacts (`image ∪ mixed ∪ low_quality_text`, per 2026-06-18 update) | JSON gains image **captions + descriptions**, image **safety**, image **embeddings**; (skips blank/redacted) |
-| **5** | Finalize doc summary | gpt‑4.1‑nano | page text + image captions | JSON gains **final** document summary |
-| **6** | Chunk + embed (staging) | text‑embedding‑3 | final text + captions | staged chunk + vector files |
-| **7** | **Specialized ingestion → system** | (load) | all staged artifacts | **Azure Storage uploads + Postgres writes + events** |
+| **2** ✅ | Render + classify + register | none | PDF + S1 JSON | page PNGs, image-asset files, artifacts, thumbnail; JSON gains `page_kind`, `image_assets[]` |
+| **3** ✅ | Text summaries | gpt‑4.1‑nano | page text | JSON gains per-page `summary`/`summary_json` + `text_safety`; **provisional** doc summary |
+| **4** ✅ | Image-asset processing | gpt‑5‑mini + AI Vision + Content Safety | image assets + artifacts (`image ∪ mixed ∪ low_quality_text`) | JSON gains image **captions + descriptions**, image **safety**, image **embeddings** (`.emb.json`, 1024‑d); (skips blank/redacted) |
+| **5** ✅ | Finalize doc summary | gpt‑4.1‑nano | page text + image captions | JSON gains **final** document summary |
+| **6** ✅ | **Chunk** (sv‑kb chunker, chunk-only) | none | final text | sibling `<name>.chunks.json` + `stage6` block |
+| **7** | **Embed** (`src/embed`) — text chunks only | text‑embedding‑3 | `chunks.json` (children) | staged **`content_sha`-keyed** vector store (float32) |
+| **8** | **Ingest** (`src/ingest`) — unified, all source kinds | (load) | all staged artifacts (PDF **+** media) | **Azure Storage uploads + Postgres rows + metadata bags** |
 
-Stages 1–6 are local staging; **Stage 7 is the only step that writes to Azure Storage or the database.**
+Stages 1–7 are local staging; **Stage 8 (ingest) is the only step that writes to Azure Storage or the
+database.** Image embeddings are produced **in-track** (PDF Stage 4 / media-image stage) and **unified at
+Stage 8** in `image_embeddings` deduped by image `content_hash`; text chunks are embedded **once** at Stage 7
+(shared across PDF + media), deduped by `content_sha`.
 
 ## 5. Directory & artifact layout (per PDF)
 
