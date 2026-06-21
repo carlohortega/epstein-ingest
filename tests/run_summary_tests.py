@@ -100,6 +100,21 @@ def main():
         check(em["embedded_unique_content_sha"] == 7 and em["embedding_model"] == "text-embedding-3-small",
               f"store reports 7 content_shas + locked model (got {em['embedded_unique_content_sha']})")
 
+        # ---------- per-dataset store resolution (the DS-12 real-world case) ----------
+        print("\n== per-dataset store at <dataset>/.embeddings is detected ==")
+        droot = tempfile.mkdtemp(prefix="tfe_summary_d_"); dout = tempfile.mkdtemp(prefix="tfe_summary_d_o_")
+        build_summary(droot)
+        build_embed_store(os.path.join(droot, "DataSet-77"))   # store at the DATASET root, not corpus root
+        try:
+            drep = _scan(droot, dout, chunks=True)
+            d77, d88 = _ds(drep, "DataSet-77"), _ds(drep, "DataSet-88")
+            check(d77["embed"]["store_present"] and "DataSet-77" in (d77["embed"].get("store_root") or ""),
+                  "DataSet-77 detects its own <dataset>/.embeddings store")
+            check(not d88["embed"]["store_present"],
+                  "DataSet-88 (no store, no corpus-global) correctly reports no store")
+        finally:
+            shutil.rmtree(droot, ignore_errors=True); shutil.rmtree(dout, ignore_errors=True)
+
         # ---------- S7 readiness shown even with NO store (embed not run yet) ----------
         print("\n== S7 readiness shown pre-run (no store + --chunks) ==")
         nroot = tempfile.mkdtemp(prefix="tfe_summary_n_"); nout = tempfile.mkdtemp(prefix="tfe_summary_n_o_")

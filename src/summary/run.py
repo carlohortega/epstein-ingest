@@ -56,39 +56,49 @@ def run(roots, cfg: SummaryConfig, *, generated_at: str, formats: set[str],
                 seen.add(ds)
                 dataset_roots.append(ds)
 
-    # Resolve the shared (corpus-global) Stage-7 vector store ONCE: its seen-set is reused for every dataset's
-    # S7 coverage. Store dir = --store or <corpus_root>/.embeddings. Loading the seen-set is opt-in cost — we
-    # only do it when the store actually exists (no store => S7 simply reports not_started).
+    # Resolve the Stage-7 vector store PER DATASET. A Stage-7 run rooted at a dataset writes
+    # <dataset>/.embeddings (what actually happened for DS-12); a corpus-wide run writes <corpus>/.embeddings;
+    # --store overrides to a single dir. So per dataset we prefer its own .embeddings, then fall back to the
+    # corpus-global one. Loads are cached by dir so a shared store is read once.
     corpus_root = (os.path.dirname(dataset_roots[0]) if len(dataset_roots) == 1
                    else os.path.commonpath(dataset_roots)) if dataset_roots else os.path.abspath(".")
-    store_dir = os.path.abspath(cfg.store) if cfg.store else embed_store.default_store_dir(corpus_root)
-    store_manifest = embed_store.read_manifest(store_dir)
-    embed_seen = None
-    embed_info = {"store_present": False}
-    if store_manifest is not None:
-        embed_seen = embed_store.load_seen(store_dir, store_manifest)
-        embed_info = {
-            "store_present": True,
-            "store_root": store_dir,
-            "store_aware": bool(cfg.chunks),     # exact per-doc coverage needs the per-doc child shas
-            "embedding_model": store_manifest.get("embedding_model"),
-            "dimensions": store_manifest.get("dimensions"),
-            "embedded_unique": len(embed_seen),
-        }
-        print(f"  embed store: {store_dir} ({len(embed_seen):,} content_shas, "
-              f"model={store_manifest.get('embedding_model')}, "
-              f"per-doc coverage {'on' if cfg.chunks else 'off — add --chunks'})", flush=True)
+    _store_cache: dict[str, tuple] = {}
+
+    def _resolve_store(ds_root):
+        cands = ([os.path.abspath(cfg.store)] if cfg.store
+                 else [os.path.join(ds_root, ".embeddings"), os.path.join(corpus_root, ".embeddings")])
+        for d in cands:
+            if d not in _store_cache:
+                m = embed_store.read_manifest(d)
+                _store_cache[d] = (m, embed_store.load_seen(d, m) if m is not None else None)
+            manifest, seen = _store_cache[d]
+            if manifest is not None:
+                return d, manifest, seen
+        return None, None, None
 
     agg = Aggregator()
     scans: dict[str, dict] = {}
+    embed_by_root: dict[str, dict] = {}
     for ds in dataset_roots:
+        ds_abs = os.path.abspath(ds)
+        sdir, manifest, ds_seen = _resolve_store(ds_abs)
+        if manifest is not None:
+            embed_by_root[ds_abs] = {
+                "store_present": True, "store_root": sdir, "store_aware": bool(cfg.chunks),
+                "embedding_model": manifest.get("embedding_model"), "dimensions": manifest.get("dimensions"),
+                "embedded_unique": len(ds_seen),
+            }
+            print(f"  embed store for {os.path.basename(ds_abs)}: {sdir} ({len(ds_seen):,} content_shas, "
+                  f"per-doc coverage {'on' if cfg.chunks else 'off — add --chunks'})", flush=True)
+        else:
+            embed_by_root[ds_abs] = {"store_present": False}
         print(f"  scanning {ds} ...", flush=True)
-        scans[ds] = scan_dataset(ds, cfg, agg, embed_seen=embed_seen)
+        scans[ds] = scan_dataset(ds, cfg, agg, embed_seen=ds_seen)
         sm = scans[ds]
         print(f"    {sm['docs_scanned']}/{sm['docs_total']} docs · {sm['cache_hits']} cache hits · "
               f"{sm['wall_clock_s']}s", flush=True)
 
-    result = agg.finalize(scans, embed_info)
+    result = agg.finalize(scans, embed_by_root)
     full = build_report(result, cfg.echo(), generated_at)
 
     written: list[str] = []

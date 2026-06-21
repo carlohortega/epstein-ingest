@@ -221,14 +221,17 @@ class Aggregator:
                                       for root in sorted(self._datasets)},
         }
 
-    def finalize(self, scans: dict[str, dict], embed_info: dict | None = None) -> dict:
+    def finalize(self, scans: dict[str, dict], embed_by_root: dict | None = None) -> dict:
         """Build the corpus report: a per-dataset summary list + the corpus rollup. ``scans`` maps a dataset
-        root to its ``scan`` meta dict; ``embed_info`` describes the shared S7 vector store (or None)."""
+        root to its ``scan`` meta dict; ``embed_by_root`` maps a dataset root to its S7 vector-store info
+        (stores are per-dataset — a Stage-7 run rooted at a dataset writes <dataset>/.embeddings)."""
+        embed_by_root = embed_by_root or {}
         datasets = []
         for root in sorted(self._datasets):
             datasets.append(_finalize(self._names[root], root, self._datasets[root],
-                                      scans.get(root), embed_info))
-        corpus = _finalize("CORPUS", None, self.corpus, _merge_scans(scans.values()), embed_info)
+                                      scans.get(root), embed_by_root.get(root)))
+        corpus = _finalize("CORPUS", None, self.corpus, _merge_scans(scans.values()),
+                           _aggregate_embed(embed_by_root.values()))
         # Projected-remaining must SUM the per-dataset estimates, not re-average corpus-wide: per-doc cost
         # rates differ sharply between datasets (a cheap dataset's rate would otherwise mask an expensive
         # dataset's large backlog), so a blended corpus average badly under-estimates "cost to finish".
@@ -371,6 +374,27 @@ def _finalize(name: str, root: str | None, a: _Acc, scan: dict | None,
     if scan is not None:
         out["scan"] = scan
     return out
+
+
+def _aggregate_embed(infos) -> dict:
+    """Combine per-dataset S7 store info into a corpus-level view (stores are per-dataset). Present if ANY
+    dataset has a store; embedded_unique sums across stores; store_aware only if every present store was
+    scanned store-aware (so the corpus S7 % is trustworthy)."""
+    present = [i for i in infos if i and i.get("store_present")]
+    if not present:
+        return {"store_present": False}
+    # Dedupe embedded_unique by store path: datasets may share ONE store (corpus-global), so summing the
+    # raw per-dataset counts would double-count its shas. Count each distinct store once.
+    per_store = {i.get("store_root"): i.get("embedded_unique", 0) for i in present}
+    roots = set(per_store)
+    return {
+        "store_present": True,
+        "store_aware": all(i.get("store_aware") for i in present),
+        "embedding_model": present[0].get("embedding_model"),
+        "dimensions": present[0].get("dimensions"),
+        "embedded_unique": sum(per_store.values()),
+        "store_root": next(iter(roots)) if len(roots) == 1 else "(per-dataset)",
+    }
 
 
 def _merge_scans(scans) -> dict | None:
