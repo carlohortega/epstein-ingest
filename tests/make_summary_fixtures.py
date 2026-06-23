@@ -184,6 +184,10 @@ def build_summary(root):
            _s6(_s5(_s3(_s2(_base("VOL00088/IMAGES/flat_done.pdf")), 0.0008))), chunk_shas=[F1, F2])
     _write(root, f"{DS88}/no_sidecar.pdf", None)
     _write_raw(root, f"{DS88}/corrupt.pdf", "{ this is : not json ]")
+    # Non-pipeline bucket (like DS-09 MISSING-NATIVES): ok sidecar + stage2 but NOT under IMAGES/ -> must be
+    # EXCLUDED from the rollup (it would otherwise drag S3 below 100% the way DS-09's 242 did).
+    _write(root, "DataSet-88/VOL00088/MISSING-NATIVES/native1.pdf",
+           _s2(_base("VOL00088/MISSING-NATIVES/native1.pdf")))
     # render-tree decoys the prune MUST skip
     _write(root, f"{DS88}/flat_done/decoy.pdf", _s3(_s2(_base("x")), 9.99))
     _write(root, f"{DS88}/flat_done/images/inner.pdf", _s3(_s2(_base("y")), 9.99))

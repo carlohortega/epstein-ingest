@@ -26,15 +26,26 @@ from .util import sidecar_path
 # selected: within the per-folder sample budget (always True in full mode). exists: a sibling sidecar is
 # present (False -> PDF with no Stage-1 output yet -> a health metric, not an error). mtime/size: the
 # sidecar's, for the incremental cache key (None when no sidecar).
-SidecarEntry = namedtuple("SidecarEntry", "pdf_path sidecar_path exists mtime size selected")
+# in_pipeline: the doc lives under an ``IMAGES`` segment — the ONLY place the Stage 1-8 pipeline operates.
+# DS-09 (uniquely) also carries non-pipeline sibling buckets (MISSING-NATIVES = "No Images Produced"
+# placeholders, EMPTY, NATIVES, CORRUPTED, DATA, DB-EXTRACT) that the stages never process; those are
+# yielded with in_pipeline=False so the scanner can exclude them from the rollup (not silently — counted).
+SidecarEntry = namedtuple("SidecarEntry", "pdf_path sidecar_path exists mtime size selected in_pipeline")
 
 _PRUNE_NAMES = {"images", "pages", "artifacts"}
+
+
+def _under_images(dirpath: str) -> bool:
+    """True if any path component is ``IMAGES`` (case-insensitive) — i.e. the doc is in the pipeline tree.
+    The lowercase ``images`` render subdir is already pruned from traversal, so this matches the dataset's
+    uppercase ``VOLxxxxx/IMAGES`` doc dir."""
+    return any(p.lower() == "images" for p in dirpath.replace("/", os.sep).split(os.sep))
 
 
 def iter_sidecars(root: str, sample: int = 0):
     """Yield a :class:`SidecarEntry` per ``*.pdf`` under ``root``, pruning the render trees. ``sample`` > 0
     marks only the first ``sample`` PDFs (sorted) in each leaf folder as ``selected``; the rest are still
-    yielded (so totals stay exact) but flagged for skip."""
+    yielded (so totals stay exact) but flagged for skip. Each entry carries ``in_pipeline`` (under IMAGES)."""
     root = os.path.abspath(root)
     stack = [root]
     while stack:
@@ -62,6 +73,7 @@ def iter_sidecars(root: str, sample: int = 0):
             stack.append(os.path.join(dirpath, name))
 
         pdfs = sorted(n for n in files if n.lower().endswith(".pdf"))
+        in_pipeline = _under_images(dirpath)
         for i, name in enumerate(pdfs):
             pdf_path = os.path.join(dirpath, name)
             side = sidecar_path(pdf_path)
@@ -74,7 +86,7 @@ def iter_sidecars(root: str, sample: int = 0):
                 except OSError:
                     sde = None
             yield SidecarEntry(pdf_path, side, sde is not None, mtime, size,
-                               selected=(sample <= 0 or i < sample))
+                               selected=(sample <= 0 or i < sample), in_pipeline=in_pipeline)
 
 
 def discover_datasets(root: str) -> list[str]:

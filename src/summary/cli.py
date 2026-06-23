@@ -51,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
                         "S7 embed coverage (slower)")
     p.add_argument("--store", default="", metavar="DIR",
                    help="Stage-7 vector store dir for S7 embed coverage (default: <corpus_root>/.embeddings)")
+    p.add_argument("--include-non-pipeline", dest="images_only", action="store_false",
+                   help="also count docs outside IMAGES/ (DS-09 MISSING-NATIVES/EMPTY/...); default excludes them")
     p.add_argument("--no-cache", dest="use_cache", action="store_false", help="disable the incremental cache")
     p.add_argument("--rebuild-cache", action="store_true", help="ignore + overwrite the incremental cache")
     p.add_argument("--version", action="version", version=f"{SUMMARY_TOOL_NAME} {SUMMARY_TOOL_VERSION}")
@@ -84,6 +86,7 @@ def config_from_args(args) -> SummaryConfig:
         sample=max(0, args.sample),
         chunks=args.chunks,
         store=args.store,
+        images_only=args.images_only,
     )
 
 

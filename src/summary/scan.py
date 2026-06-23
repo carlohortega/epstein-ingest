@@ -84,7 +84,7 @@ def scan_dataset(dataset_root: str, cfg: SummaryConfig, aggregator, embed_seen: 
 
     workers = cfg.workers or (os.cpu_count() or 4)
     want_shas = embed_seen is not None and cfg.chunks    # store-aware S7 needs per-doc child shas
-    docs_total = docs_scanned = sampled_out = 0
+    docs_total = docs_scanned = sampled_out = non_pipeline = 0
     live_paths: set[str] = set()
 
     def fold(sidecar_path, mtime, size, digest):
@@ -122,8 +122,14 @@ def scan_dataset(dataset_root: str, cfg: SummaryConfig, aggregator, embed_seen: 
 
     # Stream selected misses through the pool; cache hits + missing-sidecar docs fold inline.
     def iter_misses():
-        nonlocal docs_total, sampled_out
+        nonlocal docs_total, sampled_out, non_pipeline
         for e in iter_sidecars(dataset_root, sample=cfg.sample):
+            # Non-pipeline docs (outside IMAGES/ — DS-09's MISSING-NATIVES/EMPTY/... buckets) are excluded
+            # from the rollup and counted separately, never folded; their cache entries are pruned (not in
+            # live_paths). The stages only operate on IMAGES, so this is what "done" must be measured against.
+            if cfg.images_only and not e.in_pipeline:
+                non_pipeline += 1
+                continue
             docs_total += 1
             if not e.selected:
                 sampled_out += 1
@@ -161,6 +167,7 @@ def scan_dataset(dataset_root: str, cfg: SummaryConfig, aggregator, embed_seen: 
         "docs_sampled_out": sampled_out,
         "sampled_pct": pct,
         "extrapolated": bool(cfg.sample) and docs_scanned < docs_total,
+        "non_pipeline_excluded": non_pipeline,   # docs outside IMAGES/ (e.g. DS-09 MISSING-NATIVES/EMPTY)
         "cache_hits": cache.hits,
         "cache_misses": cache.misses,
         "wall_clock_s": round(time.monotonic() - started, 3),

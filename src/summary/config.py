@@ -34,6 +34,11 @@ class SummaryConfig:
     # coverage is reported; with --chunks it yields exact per-doc coverage. "" => auto-detect the default.
     store: str = ""
 
+    # The pipeline only operates on docs under an IMAGES/ segment. Non-pipeline sibling buckets (DS-09's
+    # MISSING-NATIVES "No Images Produced" placeholders, EMPTY, NATIVES, ...) are excluded from the rollup
+    # and counted separately. --include-non-pipeline turns this off (count everything).
+    images_only: bool = True
+
     def echo(self) -> dict:
         """Ordered, JSON-safe echo for the report's ``scan.config`` (stable key order => deterministic)."""
         return asdict(self)

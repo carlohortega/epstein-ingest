@@ -71,11 +71,17 @@ def main():
         corpus = report["corpus"]
         ds77, ds88 = _ds(report, "DataSet-77"), _ds(report, "DataSet-88")
 
-        # ---------- §9.5 layouts + prune ----------
-        print("\n== layouts + prune ==")
+        # ---------- §9.5 layouts + prune + non-pipeline exclusion ----------
+        print("\n== layouts + prune + IMAGES-only exclusion ==")
         check(ds77["totals"]["docs"] == 6, f"DS-77 sees 6 docs (got {ds77['totals']['docs']})")
-        check(ds88["totals"]["docs"] == 3, f"DS-88 sees 3 docs, decoys pruned (got {ds88['totals']['docs']})")
-        check(corpus["totals"]["docs"] == EXPECTED["corpus_docs"], "corpus = 9 docs")
+        check(ds88["totals"]["docs"] == 3,
+              f"DS-88 sees 3 docs — decoys pruned + MISSING-NATIVES excluded (got {ds88['totals']['docs']})")
+        check(corpus["totals"]["docs"] == EXPECTED["corpus_docs"], "corpus = 9 docs (non-pipeline excluded)")
+        check(corpus["scan"]["non_pipeline_excluded"] == 1,
+              f"1 non-pipeline doc (MISSING-NATIVES, outside IMAGES) excluded + counted "
+              f"(got {corpus['scan'].get('non_pipeline_excluded')})")
+        check(ds88["stages"]["stage3"]["state"] == "done",
+              "DS-88 S3 reads done — the excluded MISSING-NATIVES doc does NOT drag it below 100%")
         check(corpus["cost"]["total_usd"] < 1.0, "pruned decoy PDFs ($9.99) never entered the rollup")
 
         # ---------- §9.2 progress incl. S4 gating + S7 store-aware + S8 n/a ----------

@@ -407,6 +407,7 @@ def _merge_scans(scans) -> dict | None:
         "docs_total": sum(s["docs_total"] for s in scans),
         "docs_scanned": sum(s["docs_scanned"] for s in scans),
         "docs_sampled_out": sum(s.get("docs_sampled_out", 0) for s in scans),
+        "non_pipeline_excluded": sum(s.get("non_pipeline_excluded", 0) for s in scans),
         "cache_hits": sum(s["cache_hits"] for s in scans),
         "cache_misses": sum(s["cache_misses"] for s in scans),
         "extrapolated": any(s.get("extrapolated") for s in scans),
