@@ -108,7 +108,8 @@ def finalize_document(rel: str, pdf_path: str, sc_path: str, sidecar: dict, cfg:
     finalizes with ``parents=0`` (and ``chunks_ref:null``) so it is marked done, not retried. Returns the
     manifest result dict."""
     try:
-        chunks_json, identifiers, counts = chunk_document(pdf_path, sidecar)
+        chunks_json, identifiers, counts = chunk_document(
+            pdf_path, sidecar, case_key=cfg.case_key, dataset_key=cfg.dataset_key)
     except IdentifierError as exc:
         return _result("error", rel, error_code="no_identifiers", message=str(exc)[:300])
 

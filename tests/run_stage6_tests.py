@@ -176,6 +176,28 @@ def main() -> int:
         finally:
             shutil.rmtree(croot, ignore_errors=True)
 
+        # -- explicit --case-key override (the content_sha identity fix; v1.1.0) ---------------------
+        print("\n== explicit case_key override (epstein) ==")
+        oroot = tempfile.mkdtemp(prefix="tfe_s6_ck_")
+        build_stage6(oroot)
+        try:
+            ocfg = Stage6Config(case_key="epstein")
+            om = run_stage6(oroot, ocfg, FIXED_TS, force=False, workers=1, progress_every=0)
+            oid = load(oroot, f"{BASE}/two_text")["stage6"]["identifiers"]
+            check(oid["case_key"] == "epstein" and oid["dataset_key"] == "DataSet-77",
+                  "override: identifiers.case_key=epstein; dataset_key still path-derived (DataSet-77)")
+            oc = load_chunks(oroot, f"{BASE}/two_text")[0]["children"][0]
+            oexp = hashlib.sha256(
+                (EMBEDDING_MODEL + "\n" + oc["context_prefix"] + "\n" + oc["text"]).encode("utf-8")).hexdigest()
+            check("epstein/DataSet-77" in oc["context_prefix"] and oexp == oc["content_sha"],
+                  "override: context_prefix carries epstein/<dataset_key> + content_sha recomputed matches")
+            check(load(oroot, f"{BASE}/two_text")["stage6"]["config"]["case_key"] == "epstein",
+                  "override: stage6.config echoes case_key=epstein (provenance)")
+            check(om["pdfs_errored"] == 0 and "stage6" in load(oroot, "DataSet-77/loose/no_ids"),
+                  "override: no-VOL doc chunks when case_key is explicit (the DS-01..08 fix)")
+        finally:
+            shutil.rmtree(oroot, ignore_errors=True)
+
     finally:
         shutil.rmtree(root, ignore_errors=True)
 

@@ -36,7 +36,11 @@ block so a sidecar is self-describing about its divergence from a hypothetical f
 """
 
 STAGE6_TOOL_NAME = "text-first-extract-stage6"
-STAGE6_TOOL_VERSION = "1.0.0"
+# 1.1.0: case_key/dataset_key can be supplied explicitly (--case-key/--dataset-key) instead of derived from
+# the path. The path-derived case_key (the VOLxxxxx segment) was WRONG — the live case_key is a corpus
+# constant (e.g. "epstein"), not the volume — so chunks built before this carry a wrong content_sha and must
+# be re-chunked with the explicit key.
+STAGE6_TOOL_VERSION = "1.1.0"
 
 # The sv-kb defaults consolidate.py relies on. Passed EXPLICITLY (same values) for clarity; they feed every
 # child's content_sha, so changing either makes 100% of our chunks distinguishable + breaks the shared

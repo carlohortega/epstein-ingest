@@ -60,22 +60,35 @@ class IdentifierError(ValueError):
     break the shared embedding cache/dedup (Handoff §1a.3)."""
 
 
-def derive_identifiers(pdf_path: str, sidecar: dict) -> tuple[str, str, str]:
-    """(document_name, case_key, dataset_key) for the content_sha. document_name = PDF stem; case_key from
-    the sidecar's ``source.relative_path`` (falling back to the absolute path); dataset_key from the
-    absolute path. Casing is preserved verbatim (``DataSet-12`` / ``VOL00012``). Raises IdentifierError if
-    either key is absent."""
+def derive_identifiers(pdf_path: str, sidecar: dict, *, case_key: str = "",
+                       dataset_key: str = "") -> tuple[str, str, str]:
+    """(document_name, case_key, dataset_key) for the content_sha. ``document_name`` = PDF stem. ``case_key``
+    and ``dataset_key`` use the EXPLICIT override when given (the live sv-kb convention — e.g. case_key
+    ``epstein``, which is a corpus constant, NOT the volume); otherwise they fall back to path derivation
+    (legacy: dataset_key = the ``DataSet-NN`` segment, case_key = the ``VOLxxxxx`` segment). These feed
+    content_sha, so a wrong value makes every chunk distinguishable — pass ``--case-key`` for real runs.
+    Raises IdentifierError if a key is neither overridden nor derivable."""
     norm = pdf_path.replace("\\", "/")
     document_name = os.path.splitext(os.path.basename(norm))[0]
     rel = ((sidecar.get("source") or {}).get("relative_path") or "").replace("\\", "/")
 
-    ds = _DATASET_RE.search(norm)
-    case = _CASE_RE.search(rel) or _CASE_RE.search(norm)
-    if not ds:
-        raise IdentifierError(f"no DataSet-NN segment in path: {pdf_path}")
-    if not case:
-        raise IdentifierError(f"no VOLxxxxx segment in path/relative_path: {pdf_path}")
-    return document_name, case.group(1), ds.group(1)
+    if dataset_key:
+        ds_val = dataset_key
+    else:
+        m = _DATASET_RE.search(norm)
+        if not m:
+            raise IdentifierError(f"no dataset_key override and no DataSet-NN segment in path: {pdf_path}")
+        ds_val = m.group(1)
+
+    if case_key:
+        case_val = case_key
+    else:
+        m = _CASE_RE.search(rel) or _CASE_RE.search(norm)
+        if not m:
+            raise IdentifierError(f"no case_key override and no VOLxxxxx segment in path: {pdf_path}")
+        case_val = m.group(1)
+
+    return document_name, case_val, ds_val
 
 
 def build_pages(sidecar: dict) -> tuple[list[tuple[int, str]], int]:
@@ -99,15 +112,18 @@ def build_pages(sidecar: dict) -> tuple[list[tuple[int, str]], int]:
     return pages, skipped
 
 
-def chunk_document(pdf_path: str, sidecar: dict) -> tuple[list[dict], dict, dict]:
+def chunk_document(pdf_path: str, sidecar: dict, *, case_key: str = "",
+                   dataset_key: str = "") -> tuple[list[dict], dict, dict]:
     """Chunk one document. Returns (chunks_json, identifiers, counts) where:
       * chunks_json = ``parents_to_dicts(chunk_pages(...))`` — the exact bytes the live indexer consumes;
       * identifiers = {document_name, case_key, dataset_key};
       * counts = {pages_chunked, parents, children, skipped_pages}.
-    Raises IdentifierError if the keys can't be derived (caller records it as an error, does not finalize)."""
+    ``case_key``/``dataset_key`` override the path derivation (see ``derive_identifiers``). Raises
+    IdentifierError if a key can't be resolved (caller records it as an error, does not finalize)."""
     from . import EMBEDDING_MODEL, BRIEF_DESCRIPTION
 
-    document_name, case_key, dataset_key = derive_identifiers(pdf_path, sidecar)
+    document_name, case_key, dataset_key = derive_identifiers(
+        pdf_path, sidecar, case_key=case_key, dataset_key=dataset_key)
     pages, skipped = build_pages(sidecar)
 
     parents = chunk_pages(

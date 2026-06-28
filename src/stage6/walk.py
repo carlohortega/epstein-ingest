@@ -170,7 +170,7 @@ def dry_run(root: str, cfg: Stage6Config, *, force: bool = False) -> dict:
             continue
         eligible += 1
         try:
-            _chunks, _ids, c = chunk_document(p, sc)
+            _chunks, _ids, c = chunk_document(p, sc, case_key=cfg.case_key, dataset_key=cfg.dataset_key)
         except IdentifierError:
             errored += 1
             continue

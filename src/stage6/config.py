@@ -19,6 +19,13 @@ class Stage6Config:
     # i.e. I/O-bound at these doc sizes, so a thread pool mirrors Stage 5; raise for fast NVMe.
     concurrency: int = 8
 
+    # Content_sha identity (Handoff §1a.3). The chunk context_prefix embeds "{case_key}/{dataset_key}", so
+    # these feed every child's content_sha and MUST match the live sv-kb convention. Empty => derive from the
+    # path (legacy: dataset_key=DataSet-NN, case_key=VOLxxxxx). The VOL segment is NOT the case_key — for real
+    # corpus runs pass the explicit value, e.g. --case-key epstein. Echoed into stage6.config for provenance.
+    case_key: str = ""
+    dataset_key: str = ""
+
     def echo(self) -> dict:
         """Ordered, JSON-safe echo for ``stage6.config`` (stable key order => deterministic output)."""
         return asdict(self)
