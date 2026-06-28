@@ -21,7 +21,8 @@ from src.stage1.walk import run as run_stage1, sidecar_path        # noqa: E402
 from src.stage2.config import Stage2Config                  # noqa: E402
 from src.stage2.walk import run as run_stage2              # noqa: E402
 from src.stage3.config import Stage3Config                  # noqa: E402
-from src.stage3.client import LLMResult, Stage3CallError, estimate_cost_usd  # noqa: E402
+from src.stage3.client import LLMResult, Stage3CallError, estimate_cost_usd, parse_structured_content  # noqa: E402
+import src.stage3.client as s3client  # noqa: E402
 from src.stage3.connection import Connection               # noqa: E402
 from src.stage3.walk import run as run_stage3, dry_run      # noqa: E402
 from src.stage3.batch import run_batch                      # noqa: E402
@@ -128,8 +129,60 @@ def _prep_corpus() -> str:
     return root
 
 
+class _FakeResp:
+    """Minimal stand-in for a requests Response, for the NanoClient robustness test."""
+    def __init__(self, content: str, status: int = 200, finish: str = "stop") -> None:
+        self.status_code = status
+        self.headers: dict = {}
+        self.text = content
+        self._content = content
+        self._finish = finish
+
+    def json(self) -> dict:
+        return {"choices": [{"finish_reason": self._finish, "message": {"content": self._content}}],
+                "usage": {"prompt_tokens": 5, "completion_tokens": 5}}
+
+
+def _test_client_robustness() -> None:
+    """JSON repair + bad_output auto-retry in the real NanoClient (monkeypatched requests; no network)."""
+    # repair: a valid object wrapped in stray prose is recovered, not failed
+    wrapped = {"choices": [{"message": {"content": 'Sure! {"summary": "ok"} hope that helps'}}]}
+    check(parse_structured_content(wrapped) == {"summary": "ok"},
+          "parse repairs prose-wrapped JSON")
+    bad = {"choices": [{"message": {"content": '{"summary": broken'}}]}
+    raised = False
+    try:
+        parse_structured_content(bad)
+    except Stage3CallError as e:
+        raised = e.code == "bad_output"
+    check(raised, "parse raises bad_output on unrepairable JSON")
+
+    cfg = Stage3Config(max_retries=3, retry_base_seconds=0.0, retry_max_seconds=0.0)
+    conn = Connection("https://fake", "key", "fake-nano", "v")
+    orig = s3client.requests.post
+    try:
+        seq = iter([_FakeResp('{"summary": oops'), _FakeResp('{"summary": "fixed"}')])
+        s3client.requests.post = lambda *a, **k: next(seq)
+        r = s3client.NanoClient(conn, cfg).complete_json([{"role": "user", "content": "x"}],
+                                                         {"name": "s", "schema": {}}, 64)
+        check(r.data == {"summary": "fixed"}, "complete_json retries a bad_output reply then succeeds")
+
+        s3client.requests.post = lambda *a, **k: _FakeResp('{"summary": still bad')
+        raised = False
+        try:
+            s3client.NanoClient(conn, cfg).complete_json([{"role": "user", "content": "x"}],
+                                                         {"name": "s", "schema": {}}, 64)
+        except Stage3CallError as e:
+            raised = e.code == "bad_output"
+        check(raised, "complete_json surfaces bad_output after exhausting retries on persistent bad JSON")
+    finally:
+        s3client.requests.post = orig
+
+
 def main() -> int:
     cfg = Stage3Config()
+    print("== client robustness: JSON repair + bad_output retry ==")
+    _test_client_robustness()
     root = _prep_corpus()
     try:
         nano = FakeNano()

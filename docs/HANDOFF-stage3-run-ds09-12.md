@@ -53,7 +53,7 @@ slow. DS‑09 already lives on `C:` and is ready right now.
 | Package | repo over UNC | **`C:\epstein-ingest\src`** (`PYTHONPATH=C:\epstein-ingest`; has `stage3` — but **verify it's current**, re-sync from `\\wsl$\Ubuntu-22.04\home\cortega\repos\epstein-ingest\src` if unsure) |
 | Azure creds | `~/repos/sv-kb/.env.local` | **`\\wsl$\Ubuntu-22.04\home\cortega\.env.local`** (the `sv-kb` repo is NOT on this machine). Has `AZURE_OPENAI_ENDPOINT/API_KEY/CHAT_API_VERSION/CHAT_NANO_DEPLOYMENT` (+ vision/embed/transcribe slots for later stages). |
 | WSL home / distro | `home/carlo`, `ubuntu` | `home/cortega`, **`Ubuntu-22.04`** |
-| Layout | nested `IMAGES\NNNN` | DS‑10/11/12 **nested**; **DS‑09 is FLAT** (`IMAGES\*.pdf`) — changes how you drive it (§6) |
+| Layout | nested `IMAGES\NNNN` | **THREE shapes — don't hardcode.** DS‑01–08: `DataSet-NN\IMAGES\NNNN` (**no VOL layer**); DS‑10/11/12: `DataSet-NN\VOL000NN\IMAGES\NNNN`; **DS‑09 FLAT** `VOL00009\IMAGES\*.pdf`. Resolve per dataset — see [`HANDOFF-stage3-dataset-layouts.md`](HANDOFF-stage3-dataset-layouts.md) |
 
 You can run cleanly from **PowerShell** (no `D:`/MSYS path-mangling needed since data is on `C:`). The Git‑Bash
 per-subfolder pattern from the old doc still works too; just swap the paths/interpreter/creds above.

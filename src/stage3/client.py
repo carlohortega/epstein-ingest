@@ -99,9 +99,42 @@ def build_request_body(messages: list[dict], schema: dict, max_output_tokens: in
     return body
 
 
+def _extract_json_object(text: str) -> str | None:
+    """Return the first balanced top-level ``{...}`` object in ``text`` (brace-matched, string-aware), or
+    None. A conservative repair for a reply wrapped in stray prose/markdown around otherwise-valid JSON: it
+    never edits inside the object, so it cannot fabricate or alter content."""
+    start = text.find("{")
+    if start < 0:
+        return None
+    depth = 0
+    in_str = False
+    esc = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+        elif c == '"':
+            in_str = True
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    return None
+
+
 def parse_structured_content(body: dict) -> dict:
     """Extract + JSON-parse the assistant message. Structured outputs return valid JSON; we still guard
-    against a stray code fence so one odd reply can't crash a 300k-page run."""
+    against a stray code fence, and — when the raw reply won't parse — make ONE conservative repair attempt
+    (extract the first balanced ``{...}`` object) before declaring ``bad_output``. The repair only rescues
+    prose/markdown wrapped around valid JSON; a genuinely malformed object still raises ``bad_output`` (and
+    ``complete_json`` then re-requests, since unparseable output is usually a transient sampling glitch)."""
     content = (body["choices"][0]["message"]["content"] or "").strip()
     if content.startswith("```"):
         inner = content[3:]
@@ -110,16 +143,38 @@ def parse_structured_content(body: dict) -> dict:
     try:
         return json.loads(content)
     except json.JSONDecodeError as exc:
+        candidate = _extract_json_object(content)
+        if candidate is not None and candidate != content:
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError:
+                pass
         raise Stage3CallError(f"unparseable structured output: {exc}", "bad_output") from exc
 
 
+# Azure flags blocked content with several shapes: the TEXT content-management policy (error.code
+# "content_filter" / "content management policy"), and — for VISION inputs — a 400 with error.code
+# "content_policy_violation" and message "...content that is not allowed by our content safety system."
+# Catch all of them so an image block is quarantined as a decisive safety signal (Handoff §5), not dropped
+# as a generic bad_request (which is what mis-logged 2,133 DS-10 CSAM/explicit images on 2026-06-21).
+_CONTENT_FILTER_CODES = {"content_filter", "content_policy_violation"}
+_CONTENT_FILTER_MARKERS = ("content management policy", "content safety system",
+                           "responsibleaipolicyviolation", "content_filter")
+
+
 def _is_content_filter_400(text: str) -> bool:
-    """True when a 4xx body is Azure's content-management policy block (error.code == content_filter)."""
+    """True when a 4xx body is an Azure content-policy block — the text OR the image (vision) variant."""
     try:
         err = (json.loads(text) or {}).get("error") or {}
     except (json.JSONDecodeError, TypeError):
-        return "content management policy" in (text or "")
-    return err.get("code") == "content_filter" or "content management policy" in (err.get("message") or "")
+        blob = (text or "").lower()
+        return any(m in blob for m in _CONTENT_FILTER_MARKERS)
+    if str(err.get("code") or "").lower() in _CONTENT_FILTER_CODES:
+        return True
+    if str((err.get("innererror") or {}).get("code") or "").lower() == "responsibleaipolicyviolation":
+        return True
+    msg = str(err.get("message") or "").lower()
+    return any(m in msg for m in _CONTENT_FILTER_MARKERS)
 
 
 class NanoClient:
@@ -164,7 +219,16 @@ class NanoClient:
                 raise Stage3CallError("response content-filtered (finish_reason=content_filter)",
                                       "content_filter")
             prompt, completion, cached = usage_from_response(resp)
-            return LLMResult(parse_structured_content(resp), prompt, completion, cached)
+            try:
+                data = parse_structured_content(resp)
+            except Stage3CallError as exc:                     # bad_output (after repair attempt)
+                # A 200 with unparseable JSON is almost always a transient sampling glitch; re-request with
+                # fresh sampling within the same retry budget rather than failing the doc. A genuinely
+                # pathological reply exhausts retries and surfaces as bad_output for the caller to flag.
+                last = exc
+                self._sleep(attempt, None)
+                continue
+            return LLMResult(data, prompt, completion, cached)
         raise last or Stage3CallError("exhausted retries", "throttled")
 
     def _sleep(self, attempt: int, retry_after: str | None) -> None:
