@@ -28,7 +28,12 @@ IMAGE_EXTS = frozenset({"jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp
 # Output dirs we create next to an asset (``<basename>.media/``) — pruned from the walk so a processed
 # corpus never makes os.walk descend into thousands of frame dirs (the flat-DS-09 slow-walk lesson).
 _OUTPUT_DIR_SUFFIX = ".media"
-_PRUNE_DIR_NAMES = {"IMAGES"}  # the PDF track tree (case-insensitive); see HANDOFF-media-track §0a/§4
+# Non-source buckets to skip (case-insensitive). ``IMAGES`` is the PDF track's tree; the DS-09 VOL00009
+# junk/staging buckets (CORRUPTED/DATA/DB-EXTRACT/EMPTY/MISSING-NATIVES) are NOT source media — real media
+# lives in ``NATIVES``. ``REVIEW`` is the corpus-root human-review export (PDF page renders, not media).
+# Media stages MUST run per-dataset (DataSet-NN), never the corpus root; this is defense-in-depth on top of
+# that. Mirrors the PDF track's "only IMAGES is legit" rule. See HANDOFF §0a/§2a.
+_PRUNE_DIR_NAMES = {"IMAGES", "CORRUPTED", "DATA", "DB-EXTRACT", "EMPTY", "MISSING-NATIVES", "REVIEW"}
 
 
 def detect_kind(filename: str) -> str | None:
