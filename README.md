@@ -16,10 +16,16 @@ Per-dataset processing state. Stages 1–5 are LLM/render stages; **Stage 6 is c
 
 | Dataset | S1 | S2 | S3 | S4 | S5 | S6 | S7 |
 |---|---|---|---|---|---|---|---|
-| **DS-09** (flat, ~529k) | ✅ | ✅ uniform end-state | ⬚ not started | ⬚ | ⬚ | ⬚ | ⬚ |
-| **DS-10** (504 folders, ~503k) | ✅ | ✅ | ✅ 504/504 | ⬚ not started | ⬚ | ⬚ | ⬚ |
-| **DS-11** (332 folders, ~332k) | ✅ | ✅ | ✅ | ✅ 3,284 imgs | ✅ done ($0.17) | ✅ done (1.25M ch) | ⬚ ready |
+| **DS-09** (flat, ~529k) | ✅ | ✅ uniform end-state | ⬚ | ⬚ | ⬚ | ✅ done (IMAGES) | ✅ done (3.53M ch) |
+| **DS-10** (504 folders, ~503k) | ✅ | ✅ | ✅ 504/504 | ⬚ | ⬚ | ✅ done | ✅ done (2.44M ch) |
+| **DS-11** (332 folders, ~332k) | ✅ | ✅ | ✅ | ✅ 3,284 imgs | ✅ done ($0.17) | ✅ done (1.25M ch) | ✅ done (1.25M ch) |
 | **DS-12** (1 folder, 152) | ✅ | ✅ | ✅ | ✅ | ✅ done (152 docs) | ✅ done (canary) | ✅ done (canary) |
+
+> **Stage 7 status (re-embed):** DS-09/10/11 were re-embedded after a chunking fix and **verified** (store
+> keys == unique child `content_sha`, full `children_seen` coverage, 0 errors, fidelity round-trip):
+> DS-09 = 3,528,593 vectors (~$9.14, **IMAGES-scoped** — store at `VOL00009\IMAGES\.embeddings`),
+> DS-10 = 2,444,735 (~$6.12), DS-11 = 1,248,659 (~$3.03). Run unattended via Windows Scheduled Tasks
+> (`epstein-stage7-ds09`, `epstein-stage7-ds11-ds10`) since Claude background tasks get reaped (~25 min).
 
 ✅ done · ⬚ pending · — n/a. **Stage 6** was validated on the **DS-12 canary** (152 docs → 1,727 parents /
 3,824 children, ~1.3 s, $0). **Stage 7 (embed)** was built this cycle, validated offline (acceptance tests),
