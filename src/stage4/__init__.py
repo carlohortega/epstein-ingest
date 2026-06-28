@@ -26,7 +26,7 @@ Spec: docs/HANDOFF-stage4-image-vision.md
 """
 
 STAGE4_TOOL_NAME = "text-first-extract-stage4"
-STAGE4_TOOL_VERSION = "1.0.0"
+STAGE4_TOOL_VERSION = "1.0.1"  # 1.0.1: detect the image content-filter 400 (content_policy_violation)
 
 # Bumped whenever the vision system prompt / response schema changes. Stamped into every verdict's
 # provenance so a sidecar is self-describing (outputs are LLM-generated => provenance over byte
