@@ -121,6 +121,22 @@ def main():
         finally:
             shutil.rmtree(droot, ignore_errors=True); shutil.rmtree(dout, ignore_errors=True)
 
+        # ---------- DEEPER store at VOL*/IMAGES/.embeddings (the DS-09 real-world case) ----------
+        print("\n== store at <dataset>/VOL*/IMAGES/.embeddings is detected (DS-09 case) ==")
+        eroot = tempfile.mkdtemp(prefix="tfe_summary_e_"); eout = tempfile.mkdtemp(prefix="tfe_summary_e_o_")
+        build_summary(eroot)
+        build_embed_store(os.path.join(eroot, "DataSet-77", "VOL00077", "IMAGES"))  # store DEEP, at IMAGES dir
+        try:
+            erep = _scan(eroot, eout, chunks=True)
+            e77 = _ds(erep, "DataSet-77")
+            check(e77["embed"]["store_present"]
+                  and "IMAGES" in (e77["embed"].get("store_root") or "")
+                  and e77["stages"]["stage7"]["done"] == 2,
+                  f"DS-77 finds the deep VOL/IMAGES store + computes S7 coverage "
+                  f"(got store={e77['embed'].get('store_root')}, done={e77['stages']['stage7']['done']})")
+        finally:
+            shutil.rmtree(eroot, ignore_errors=True); shutil.rmtree(eout, ignore_errors=True)
+
         # ---------- S7 readiness shown even with NO store (embed not run yet) ----------
         print("\n== S7 readiness shown pre-run (no store + --chunks) ==")
         nroot = tempfile.mkdtemp(prefix="tfe_summary_n_"); nout = tempfile.mkdtemp(prefix="tfe_summary_n_o_")

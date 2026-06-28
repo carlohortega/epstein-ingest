@@ -56,22 +56,40 @@ def run(roots, cfg: SummaryConfig, *, generated_at: str, formats: set[str],
                 seen.add(ds)
                 dataset_roots.append(ds)
 
-    # Resolve the Stage-7 vector store PER DATASET. A Stage-7 run rooted at a dataset writes
-    # <dataset>/.embeddings (what actually happened for DS-12); a corpus-wide run writes <corpus>/.embeddings;
-    # --store overrides to a single dir. So per dataset we prefer its own .embeddings, then fall back to the
-    # corpus-global one. Loads are cached by dir so a shared store is read once.
+    # Resolve the Stage-7 vector store PER DATASET. Stage 7 writes its store at <run_root>/.embeddings, and the
+    # run_root varies: DS-12's embed was rooted at the dataset (-> DataSet-12/.embeddings) while DS-09's was
+    # rooted at the flat IMAGES dir (-> DataSet-09/VOLxxxxx/IMAGES/.embeddings). So we check, in order: --store;
+    # <dataset>/.embeddings; <dataset>/VOL*/.embeddings; <dataset>/VOL*/IMAGES/.embeddings; <corpus>/.embeddings.
+    # (Globbing one/two levels is cheap and never descends the render trees.) Loads are cached per dir.
+    import glob
     corpus_root = (os.path.dirname(dataset_roots[0]) if len(dataset_roots) == 1
                    else os.path.commonpath(dataset_roots)) if dataset_roots else os.path.abspath(".")
     _store_cache: dict[str, tuple] = {}
 
+    def _store_candidates(ds_root):
+        if cfg.store:
+            return [os.path.abspath(cfg.store)]
+        cands = [os.path.join(ds_root, ".embeddings")]
+        cands += sorted(glob.glob(os.path.join(ds_root, "*", ".embeddings")))
+        cands += sorted(glob.glob(os.path.join(ds_root, "*", "IMAGES", ".embeddings")))
+        cands += sorted(glob.glob(os.path.join(ds_root, "*", "images", ".embeddings")))
+        cands.append(os.path.join(corpus_root, ".embeddings"))
+        return cands
+
+    corpus_store = os.path.join(corpus_root, ".embeddings")
+
     def _resolve_store(ds_root):
-        cands = ([os.path.abspath(cfg.store)] if cfg.store
-                 else [os.path.join(ds_root, ".embeddings"), os.path.join(corpus_root, ".embeddings")])
-        for d in cands:
-            if d not in _store_cache:
-                m = embed_store.read_manifest(d)
-                _store_cache[d] = (m, embed_store.load_seen(d, m) if m is not None else None)
-            manifest, seen = _store_cache[d]
+        for d in _store_candidates(ds_root):
+            if d in _store_cache:
+                manifest, seen = _store_cache[d]
+            else:
+                manifest = embed_store.read_manifest(d)
+                seen = embed_store.load_seen(d, manifest) if manifest is not None else None
+                # Memoize ONLY the shared corpus-global store. Per-dataset stores (e.g. DS-09's 3.5M-sha
+                # store) are each used by exactly one dataset, so retaining their seen-sets would pile up
+                # in RAM across the run (a second OOM source) — let them be GC'd after their dataset.
+                if d == corpus_store:
+                    _store_cache[d] = (manifest, seen)
             if manifest is not None:
                 return d, manifest, seen
         return None, None, None

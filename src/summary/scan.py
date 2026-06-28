@@ -90,21 +90,25 @@ def scan_dataset(dataset_root: str, cfg: SummaryConfig, aggregator, embed_seen: 
     def fold(sidecar_path, mtime, size, digest):
         nonlocal docs_scanned
         docs_scanned += 1
-        # Cache the RAW sidecar-derived digest first (may carry chunk_shas; never the store-dependent S7
-        # verdict — the store changes independently of the sidecar, so S7 must be recomputed each run).
+        # Pop chunk_shas BEFORE caching: a 528k-doc dataset's per-doc sha lists would bloat both the in-RAM
+        # cache dict and the cache file (this OOM'd the store-aware DS-09 run). The S7 verdict is derived
+        # here from the store and is itself never cached (the store changes independently of the sidecar), so
+        # store-aware S7 simply re-reads chunks.json each run — bounded memory, opt-in heavy mode.
+        shas = digest.pop("chunk_shas", None)
         if sidecar_path is not None and digest.get("status") != "parse_error":
             cache.put(sidecar_path, mtime, size, digest)
-        if embed_seen is not None and digest.get("chunk_shas") is not None:
+        if embed_seen is not None and shas is not None:
             emb = 0
-            for h in digest["chunk_shas"]:
+            for h in shas:
                 try:
                     if bytes.fromhex(h) in embed_seen:
                         emb += 1
                 except ValueError:
                     pass
-            n = len(digest["chunk_shas"])
-            digest = {**digest, "s7_child_total": n, "s7_child_embedded": emb,
-                      "s7_done": n > 0 and emb == n}
+            n = len(shas)
+            digest["s7_child_total"] = n
+            digest["s7_child_embedded"] = emb
+            digest["s7_done"] = n > 0 and emb == n
         aggregator.add(dataset_root, digest)
 
     def _usable(cached: dict) -> bool:
