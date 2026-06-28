@@ -52,9 +52,17 @@ def _load_parents(plan: dict):
         return parents_from_dicts(json.load(f))
 
 
+def _doc_prefix(path_builder, case_key: str, dataset_key: str, document_name: str) -> str:
+    return path_builder.source_pdf(case_key, dataset_key, document_name).path[: -len("source.pdf")]
+
+
 def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: int = 1, force: bool = False,
-                  dsn: str | None = None, user_sub: str | None = None) -> dict:
-    """Apply a prepared package to the live system. Returns the apply manifest (also written to the package)."""
+                  dsn: str | None = None, user_sub: str | None = None, skip_blobs: bool = False) -> dict:
+    """Apply a prepared package to the live system. Returns the apply manifest (also written to the package).
+
+    ``skip_blobs`` writes only the database rows (registration + vectors + chunks via index_document) and does
+    NOT upload any blobs — a DB-only integration test that needs neither azcopy nor Storage creds. Blob PATHS
+    are still recorded on the rows (computed from the tenant path builder); only the bytes upload is skipped."""
     started = time.monotonic()
     plans = _read_plan(pkg_dir)
     by_doc_blobs = group_manifest_by_document(pkg_dir)
@@ -63,12 +71,14 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
         raise RuntimeError("DATABASE_URL not set — required for a live apply")
     try:
         from svkb_pipeline.db import Database                 # lazy: sv-kb/psycopg on path only at apply
+        from svkb_pipeline.blob_paths import TenantPathBuilder
     except ImportError as exc:
         raise RuntimeError(
             "svkb_pipeline not importable — put sv-kb's pipeline/shared on PYTHONPATH for a live apply "
             f"(the launcher run_apply.py does this). Underlying: {exc}") from exc
     db = Database(dsn)
-    uploader = BlobUploader(tenant_id)
+    path_builder = TenantPathBuilder(tenant_id)               # blob-path strings only (no creds)
+    uploader = None if skip_blobs else BlobUploader(tenant_id)
     resolver = TenancyResolver(ensure=cfg.ensure_tenancy)
 
     # --- tenancy preflight (read-only). Policy A: fail loud BEFORE any write if a pair is missing. ---
@@ -81,7 +91,8 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
             f"Pre-create them or re-run with --ensure-tenancy.")
 
     # --- seed placeholders + bulk pre-load all vectors once ---
-    uploader.seed_placeholders()
+    if uploader is not None:
+        uploader.seed_placeholders()
     preload = preload_vectors(db, tenant_id, pkg_dir, cfg, user_sub=user_sub)
 
     ingested = skipped = failed = 0
@@ -103,7 +114,7 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
                     continue
 
             ingestion_id, correlation_id = make_ids(tenant_id, ck, dk, dn)
-            processed_prefix = uploader._doc_prefix(ck, dk, dn)
+            processed_prefix = _doc_prefix(path_builder, ck, dk, dn)
             sk = plan.get("source_kind") or cfg.source_kind        # per-document (pdf | audio | video | image)
 
             # register (own transaction) — tenancy resolve + documents/pages/asset_context/findings +
@@ -113,13 +124,14 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
                 document_id = register_document(
                     cur, plan, tenant_id=tenant_id, case_id=case_id, dataset_id=dataset_id,
                     ingestion_id=ingestion_id, correlation_id=correlation_id,
-                    source_kind=sk, path_builder=uploader.builder)
+                    source_kind=sk, path_builder=path_builder)
                 occ_total += insert_occurrences(cur, plan, tenant_id=tenant_id, document_id=document_id,
                                                 processed_prefix=processed_prefix)
 
             # upload blobs (§4a placeholders for withheld/blank) — outside the DB transaction
-            up = uploader.upload_document(by_doc_blobs.get((ck, dk, dn), []))
-            blob_uploads += up["uploaded"] + up["placeholders"]
+            if uploader is not None:
+                up = uploader.upload_document(by_doc_blobs.get((ck, dk, dn), []))
+                blob_uploads += up["uploaded"] + up["placeholders"]
 
             # index chunks VERBATIM with the guard provider (pre-load made to_embed empty)
             parents = _load_parents(plan)
@@ -135,7 +147,7 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
 
     manifest = {
         "tool": "text-first-extract-ingest", "mode": "apply", "tenant_id": tenant_id,
-        "package": os.path.abspath(pkg_dir),
+        "package": os.path.abspath(pkg_dir), "skip_blobs": skip_blobs,
         "tenancy_preflight": pre, "preload": preload,
         "documents": {"ingested": ingested, "skipped_complete": skipped, "failed": failed,
                       "total": len(plans)},

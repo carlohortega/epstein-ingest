@@ -84,6 +84,8 @@ def main(argv=None) -> int:
     p.add_argument("--tenant", default=None, help="tenant_id UUID (required for the live apply)")
     p.add_argument("--ensure-tenancy", action="store_true", help="upsert cases/datasets (else require pre-created)")
     p.add_argument("--prepare-only", action="store_true", help="emit the package and stop (no creds, no writes)")
+    p.add_argument("--skip-blobs", action="store_true",
+                   help="DB-only apply: write rows + vectors, skip blob upload (no azcopy / Storage creds)")
     p.add_argument("--force", action="store_true", help="re-ingest completed docs")
     p.add_argument("-j", "--workers", type=int, default=4)
     args = p.parse_args(argv)
@@ -115,7 +117,8 @@ def main(argv=None) -> int:
     # --- apply preflight (creds) ---
     print("\n== S9 apply — preflight ==")
     missing = []
-    for v in ("DATABASE_URL", "AZURE_STORAGE_ACCOUNT"):
+    needed = ["DATABASE_URL"] + ([] if args.skip_blobs else ["AZURE_STORAGE_ACCOUNT"])
+    for v in needed:
         ok = bool(os.environ.get(v))
         print(f"  [{'ok' if ok else 'MISSING'}] {v}")
         if not ok:
@@ -128,18 +131,22 @@ def main(argv=None) -> int:
     print(f"  [{'ok' if svkb else 'MISSING'}] svkb_pipeline importable")
     if not svkb:
         missing.append("svkb_pipeline (set SVKB_SHARED)")
-    azc = shutil.which("azcopy")
-    print(f"  [{'ok' if azc else 'MISSING'}] azcopy on PATH")
-    if not azc:
-        missing.append("azcopy")
+    if args.skip_blobs:
+        print("  [skip] blobs (--skip-blobs): DB rows + vectors only, no azcopy/Storage")
+    else:
+        azc = shutil.which("azcopy")
+        print(f"  [{'ok' if azc else 'MISSING'}] azcopy on PATH")
+        if not azc:
+            missing.append("azcopy")
     if missing:
         print(f"\n** apply SKIPPED — missing: {missing}.\n   The reviewable package is ready at {out}; "
               f"re-run with those set to load the live system. **")
         return 0
 
-    print("\n== S9 apply → live system ==")
+    print(f"\n== S9 apply → live system{' (DB-only, --skip-blobs)' if args.skip_blobs else ''} ==")
     from src.ingest.apply import apply_package
-    am = apply_package(out, cfg, tenant_id=args.tenant, workers=args.workers, force=args.force)
+    am = apply_package(out, cfg, tenant_id=args.tenant, workers=args.workers, force=args.force,
+                       skip_blobs=args.skip_blobs)
     d = am["documents"]
     print(f"  ingested {d['ingested']} / skipped {d['skipped_complete']} / failed {d['failed']} "
           f"of {d['total']}  |  preload {am['preload']}  |  blob objects {am['blob_objects']}")
