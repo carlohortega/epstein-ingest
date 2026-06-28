@@ -128,10 +128,10 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
                 occ_total += insert_occurrences(cur, plan, tenant_id=tenant_id, document_id=document_id,
                                                 processed_prefix=processed_prefix)
 
-            # upload blobs (§4a placeholders for withheld/blank) — outside the DB transaction
+            # stage blobs into the symlink farm (§4a placeholders for withheld/blank); upload once after the
+            # loop in a single batched azcopy (scale: avoids one azcopy process per blob).
             if uploader is not None:
-                up = uploader.upload_document(by_doc_blobs.get((ck, dk, dn), []))
-                blob_uploads += up["uploaded"] + up["placeholders"]
+                uploader.stage_document(by_doc_blobs.get((ck, dk, dn), []))
 
             # index chunks VERBATIM with the guard provider (pre-load made to_embed empty)
             parents = _load_parents(plan)
@@ -145,13 +145,24 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
             failed += 1
             errors.append({"document": f"{ck}/{dk}/{dn}", "error": f"{type(exc).__name__}: {exc}"[:300]})
 
+    # one batched azcopy over the whole staged farm (all documents at once), then clean it up
+    blob_error = None
+    if uploader is not None:
+        try:
+            blob_uploads = uploader.flush()["uploaded"]
+        except Exception as exc:                              # azcopy failure → rows are still committed
+            blob_error = f"{type(exc).__name__}: {exc}"[:300]
+            errors.append({"document": "<blob flush>", "error": blob_error})
+        finally:
+            uploader.close()
+
     manifest = {
         "tool": "text-first-extract-ingest", "mode": "apply", "tenant_id": tenant_id,
         "package": os.path.abspath(pkg_dir), "skip_blobs": skip_blobs,
         "tenancy_preflight": pre, "preload": preload,
         "documents": {"ingested": ingested, "skipped_complete": skipped, "failed": failed,
                       "total": len(plans)},
-        "image_occurrences": occ_total, "blob_objects": blob_uploads,
+        "image_occurrences": occ_total, "blob_objects": blob_uploads, "blob_error": blob_error,
         "errors": errors[:500],
         "wall_clock_seconds": round(time.monotonic() - started, 3),
     }

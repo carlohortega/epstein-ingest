@@ -11,13 +11,22 @@ source bytes:
 The tenant-scoped destination path is resolved HERE (the package is tenant-agnostic) via sv-kb's
 ``TenantPathBuilder`` so every blob is rooted at ``tenants/{tenant_id}/`` by construction. Also seeds the
 shared placeholders under ``_system/redaction/`` once. Lazy sv-kb import; azcopy is shelled out.
+
+**Batched upload (scale).** Spawning one ``azcopy`` per blob is fine for a canary but dies at corpus scale
+(hundreds of thousands of files = that many process startups). Instead we build a **symlink farm** — a temp
+tree mirroring the exact ``{container}/{blob_path}`` layout, each leaf a symlink to the staged source (or the
+§4a placeholder) — then run a **single** ``azcopy copy --recursive --follow-symlinks`` over it, letting azcopy
+parallelize the transfers internally. Symlinks (not copies) mean no byte duplication, even when one placeholder
+fans out to thousands of paths. (Falls back to a file copy where symlinks aren't permitted, e.g. Windows.)
 """
 
 from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
+import tempfile
 
 from .safety import _ASSETS_DIR
 
@@ -47,52 +56,74 @@ class BlobUploader:
         self.dry = dry
         if not self.account and not self.endpoint and not dry:
             raise RuntimeError("set AZURE_STORAGE_ACCOUNT (or AZURE_STORAGE_BLOB_ENDPOINT) to build blob URLs")
+        self._farm: str | None = None      # temp symlink tree, created lazily on first stage
+        self._staged = 0
 
-    def _url(self, container: str, blob_path: str) -> str:
+    def _container_url(self, container: str) -> str:
         root = self.endpoint.rstrip("/") if self.endpoint else f"https://{self.account}.blob.core.windows.net"
-        base = f"{root}/{container}/{blob_path}"
+        base = f"{root}/{container}"
         return f"{base}?{self.sas.lstrip('?')}" if self.sas else base
 
     def _doc_prefix(self, case_key: str, dataset_key: str, document_name: str) -> str:
         # processed prefix = the document's source.pdf path minus the trailing "source.pdf"
         return self.builder.source_pdf(case_key, dataset_key, document_name).path[: -len("source.pdf")]
 
-    def _copy(self, src_local: str, container: str, blob_path: str) -> None:
-        if self.dry:
-            return
-        cmd = [self.azcopy, "copy", src_local, self._url(container, blob_path),
-               "--from-to=LocalBlob", "--overwrite=ifSourceNewer", "--log-level=ERROR"]
-        subprocess.run(cmd, check=True, capture_output=True)
+    def _stage(self, container: str, blob_path: str, src_local: str | None) -> bool:
+        """Link ``src_local`` into the symlink farm at ``{farm}/{container}/{blob_path}`` (no bytes copied)."""
+        if self.dry or not src_local or not os.path.exists(src_local):
+            return False
+        if self._farm is None:
+            self._farm = tempfile.mkdtemp(prefix="ingest-blobs-")
+        dest = os.path.join(self._farm, container, blob_path.replace("/", os.sep))
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        if os.path.lexists(dest):
+            os.remove(dest)
+        try:
+            os.symlink(os.path.abspath(src_local), dest)
+        except OSError:
+            shutil.copy2(src_local, dest)        # symlinks not permitted (Windows w/o dev mode) → copy
+        self._staged += 1
+        return True
 
     def seed_placeholders(self) -> None:
-        """Upload the shared placeholders once (idempotent) so the gateway's redaction path resolves."""
-        for action, local in _PLACEHOLDER_LOCAL.items():
+        """Stage the shared placeholders once so the gateway's redaction path resolves after flush."""
+        for local in _PLACEHOLDER_LOCAL.values():
             name = os.path.basename(local)
-            self._copy(local, PROCESSED_CONTAINER, f"tenants/{self.builder.tenant_id}/{_SYSTEM_REDACTION_PREFIX}/{name}")
+            self._stage(PROCESSED_CONTAINER,
+                        f"tenants/{self.builder.tenant_id}/{_SYSTEM_REDACTION_PREFIX}/{name}", local)
 
-    def upload_document(self, rows: list) -> dict:
-        """Place every blob for one document. ``rows`` are the manifest entries for that document."""
+    def stage_document(self, rows: list) -> int:
+        """Stage every blob for one document into the farm (cheap symlinks). Upload happens later in ``flush``.
+        ``upload`` rows link the staged file; ``placeholder:*`` rows (withheld/blank) link the placeholder."""
         if not rows:
-            return {"uploaded": 0, "placeholders": 0}
+            return 0
         r0 = rows[0]
         prefix = self._doc_prefix(r0["case_key"], r0["dataset_key"], r0["document_name"])
-        uploaded = placeholders = 0
+        n = 0
         for row in rows:
             blob_path = f"{prefix}{row['artifact']}"
-            action = row["action"]
-            if action == "upload":
-                src = row.get("source_path")
-                if not src or not os.path.exists(src):
-                    continue
-                self._copy(src, PROCESSED_CONTAINER, blob_path)
-                uploaded += 1
-            else:
-                local = _PLACEHOLDER_LOCAL.get(action)
-                if not local:
-                    continue
-                self._copy(local, PROCESSED_CONTAINER, blob_path)   # withheld/blank → placeholder bytes
-                placeholders += 1
-        return {"uploaded": uploaded, "placeholders": placeholders}
+            src = row.get("source_path") if row["action"] == "upload" else _PLACEHOLDER_LOCAL.get(row["action"])
+            if self._stage(PROCESSED_CONTAINER, blob_path, src):
+                n += 1
+        return n
+
+    def flush(self) -> dict:
+        """One ``azcopy copy --recursive --follow-symlinks`` over the whole staged farm → the container."""
+        if self.dry or self._farm is None:
+            return {"uploaded": self._staged}
+        src_dir = os.path.join(self._farm, PROCESSED_CONTAINER)
+        if not os.path.isdir(src_dir):
+            return {"uploaded": 0}
+        cmd = [self.azcopy, "copy", src_dir.replace(os.sep, "/") + "/*",
+               self._container_url(PROCESSED_CONTAINER), "--recursive", "--follow-symlinks",
+               "--from-to=LocalBlob", "--overwrite=ifSourceNewer", "--log-level=ERROR"]
+        subprocess.run(cmd, check=True, capture_output=True)
+        return {"uploaded": self._staged}
+
+    def close(self) -> None:
+        if self._farm and os.path.isdir(self._farm):
+            shutil.rmtree(self._farm, ignore_errors=True)
+        self._farm = None
 
 
 def group_manifest_by_document(pkg_dir: str) -> dict:
