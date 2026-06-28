@@ -35,18 +35,22 @@ class BlobUploader:
     ``azcopy login``'d with a managed identity)."""
 
     def __init__(self, tenant_id: str, *, account: str | None = None, sas: str | None = None,
-                 azcopy: str = "azcopy", dry: bool = False) -> None:
+                 endpoint: str | None = None, azcopy: str = "azcopy", dry: bool = False) -> None:
         from svkb_pipeline.blob_paths import TenantPathBuilder   # lazy: sv-kb on path only at apply
         self.builder = TenantPathBuilder(tenant_id)
         self.account = account or os.environ.get("AZURE_STORAGE_ACCOUNT")
         self.sas = sas or os.environ.get("AZURE_STORAGE_SAS")
+        # Explicit blob endpoint for non-default hosts (Azurite dev emulator, sovereign clouds). When set it
+        # supersedes the public `{account}.blob.core.windows.net` host — e.g. http://127.0.0.1:10000/devstoreaccount1
+        self.endpoint = endpoint or os.environ.get("AZURE_STORAGE_BLOB_ENDPOINT")
         self.azcopy = azcopy
         self.dry = dry
-        if not self.account and not dry:
-            raise RuntimeError("AZURE_STORAGE_ACCOUNT not set — required to build blob destination URLs")
+        if not self.account and not self.endpoint and not dry:
+            raise RuntimeError("set AZURE_STORAGE_ACCOUNT (or AZURE_STORAGE_BLOB_ENDPOINT) to build blob URLs")
 
     def _url(self, container: str, blob_path: str) -> str:
-        base = f"https://{self.account}.blob.core.windows.net/{container}/{blob_path}"
+        root = self.endpoint.rstrip("/") if self.endpoint else f"https://{self.account}.blob.core.windows.net"
+        base = f"{root}/{container}/{blob_path}"
         return f"{base}?{self.sas.lstrip('?')}" if self.sas else base
 
     def _doc_prefix(self, case_key: str, dataset_key: str, document_name: str) -> str:
@@ -57,7 +61,7 @@ class BlobUploader:
         if self.dry:
             return
         cmd = [self.azcopy, "copy", src_local, self._url(container, blob_path),
-               "--overwrite=ifSourceNewer", "--log-level=ERROR"]
+               "--from-to=LocalBlob", "--overwrite=ifSourceNewer", "--log-level=ERROR"]
         subprocess.run(cmd, check=True, capture_output=True)
 
     def seed_placeholders(self) -> None:
