@@ -91,12 +91,20 @@ ingest can fill it when present.
 
 ---
 
-## Ingest obligations (this owner, deferred until media shapes freeze)
+## Ingest obligations — BUILT 2026-06-28 (offline-tested; live run creds-gated)
 
-1. `discover.find_media_for_dataset` — the media-aware walker for the agreed `<MEDIA_DIR>` (§1).
-2. A `source_kind`-keyed branch in `record.py`/`load.py` for keyframe `image_occurrences` (`keyframe` +
-   `timestamp_ms`/`frame_index`, §4).
-3. Optional `pipeline.media_metadata` registration in `register.py` (§6).
+1. ✅ `discover.find_media_for_dataset` — reuses the media engine's own `find_media` walk (media under the
+   non-IMAGES sibling dirs, by extension), so there's no separate `<MEDIA_DIR>` to agree — it matches exactly
+   what the media stages write.
+2. ✅ `src/ingest/media.py` `build_media_record` + a `source_kind`-keyed keyframe branch in `load.py`
+   (`image_occurrences` with `keyframe`/`image` + `timestamp_ms`/`frame_index`); `content_hash` is read
+   straight from the occurrence record (the media track stores it, unlike the PDF track).
+3. ✅ `pipeline.media_metadata` registration (A/V) + `md_blob_path` in `register.py`.
+
+Tested in `tests/run_ingest_media_tests.py`. Implementation note: media `document_name` is the asset STEM
+(matching the chunks' `content_sha`), so a media file and a PDF that share a stem in the same dataset would
+collide on `documents` identity — not observed in this corpus (PDFs under IMAGES, media under NATIVES), but
+worth a dedup check before a live media run.
 
 Everything else (chunks, text/image vectors, safety gate, tenancy, blobs via azcopy) is already source-agnostic
 and needs no change. **Do not build #1–#3 until the media output shapes are frozen** — building against moving

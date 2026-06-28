@@ -80,6 +80,30 @@ def chunks_path(pdf_path: str) -> str:
     return os.path.splitext(pdf_path)[0] + ".chunks.json"
 
 
+# --- media track (Handoff-media-track §0a/§1; CONTRACT-media-to-ingest.md) --------------------------
+# Media assets live in the NON-IMAGES sibling dirs (NATIVES etc.), discovered by extension. We reuse the
+# media engine's own (stdlib-only) walk so the IMAGES PDF tree + ``*.media`` output dirs are pruned
+# identically — no drift between what the media stages produce and what ingest finds.
+
+def find_media_for_dataset(dataset_root: str) -> list[tuple[str, str]]:
+    """All media assets for a dataset as ``(abs_path, source_kind)`` — audio/video/image, EXCLUDING the
+    IMAGES PDF tree. Returns [] if the media package isn't importable or there is no media."""
+    try:
+        from src.media import common as media_common      # stdlib-only; no PyMuPDF/azure/psycopg
+    except ImportError:
+        return []
+    return [(os.path.abspath(p), kind) for p, kind in media_common.find_media(os.path.abspath(dataset_root))]
+
+
+def media_sidecar_path(asset: str) -> str:
+    """``clip.mp4`` → ``clip.mp4.media.json`` (the media track keeps the extension to avoid stem collisions)."""
+    return asset + ".media.json"
+
+
+def media_chunks_path(asset: str) -> str:
+    return asset + ".chunks.json"
+
+
 def default_store_dir(dataset_root: str) -> str:
     """The embed store location for a dataset (Handoff §2a): ``DataSet-NN/.embeddings`` for DS-1..8 and
     DS-10/11/12; ``VOL*/IMAGES/.embeddings`` for DS-9 (whose embed ran scoped to IMAGES). We pick whichever

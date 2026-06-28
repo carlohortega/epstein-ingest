@@ -41,13 +41,12 @@ def _read_plan(pkg_dir: str) -> list:
 
 
 def _load_parents(plan: dict):
-    """Load the document's chunks.json into ``ParentChunk`` objects for ``index_document`` (§2 step 6)."""
+    """Load the document's chunks.json into ``ParentChunk`` objects for ``index_document`` (§2 step 6).
+    The path is carried explicitly (``staged_chunks``) because the PDF and media tracks name it differently
+    (``<stem>.chunks.json`` vs ``<asset>.chunks.json``)."""
     from svkb_pipeline.chunking import parents_from_dicts     # lazy: sv-kb on path only at apply
-    staged_pdf = plan.get("staged_pdf")
-    if not staged_pdf:
-        return []
-    cpath = chunks_path(staged_pdf)
-    if not os.path.exists(cpath):
+    cpath = plan.get("staged_chunks") or (chunks_path(plan["staged_pdf"]) if plan.get("staged_pdf") else None)
+    if not cpath or not os.path.exists(cpath):
         return []
     with open(cpath, "r", encoding="utf-8") as f:
         return parents_from_dicts(json.load(f))
@@ -105,14 +104,16 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
 
             ingestion_id, correlation_id = make_ids(tenant_id, ck, dk, dn)
             processed_prefix = uploader._doc_prefix(ck, dk, dn)
+            sk = plan.get("source_kind") or cfg.source_kind        # per-document (pdf | audio | video | image)
 
-            # register (own transaction) — tenancy resolve + documents/pages/asset_context/findings + occ
+            # register (own transaction) — tenancy resolve + documents/pages/asset_context/findings +
+            # media_metadata (A/V) + image_occurrences (keyframes/images)
             with db.tenant(tenant_id, user_sub) as cur:
                 case_id, dataset_id = resolver.resolve(cur, tenant_id, ck, dk)
                 document_id = register_document(
                     cur, plan, tenant_id=tenant_id, case_id=case_id, dataset_id=dataset_id,
                     ingestion_id=ingestion_id, correlation_id=correlation_id,
-                    source_kind=cfg.source_kind, path_builder=uploader.builder)
+                    source_kind=sk, path_builder=uploader.builder)
                 occ_total += insert_occurrences(cur, plan, tenant_id=tenant_id, document_id=document_id,
                                                 processed_prefix=processed_prefix)
 
@@ -123,7 +124,7 @@ def apply_package(pkg_dir: str, cfg: IngestConfig, *, tenant_id: str, workers: i
             # index chunks VERBATIM with the guard provider (pre-load made to_embed empty)
             parents = _load_parents(plan)
             event = build_event(plan, tenant_id=tenant_id, document_id=document_id,
-                                source_kind=cfg.source_kind, user_sub=user_sub)
+                                source_kind=sk, user_sub=user_sub)
             index_document_verbatim(db, event, parents, model=cfg.embedding_model,
                                     dimensions=cfg.dimensions, page_count=(plan.get("document") or {}).get(
                                         "page_count"), batch_size=cfg.batch_size)

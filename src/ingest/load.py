@@ -92,15 +92,19 @@ def insert_occurrences(cur, plan: dict, *, tenant_id: str, document_id: str, pro
     for occ in (plan.get("image_occurrences") or []):
         page = occ.get("page_number")
         page = page if isinstance(page, int) else -1
+        ts = occ.get("timestamp_ms")
+        ts = ts if isinstance(ts, int) else -1
+        frame = occ.get("frame_index")
+        frame = frame if isinstance(frame, int) else -1
         cur.execute(
             """INSERT INTO pipeline.image_occurrences
                  (tenant_id, content_hash, document_id, case_key, dataset_key, document_name, artifact_kind,
                   page_number, timestamp_ms, frame_index, image_blob_path, embedding_model)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,-1,-1,%s,%s)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                ON CONFLICT (tenant_id, content_hash, document_id, artifact_kind, page_number, frame_index)
                DO NOTHING""",
             (tenant_id, occ.get("content_hash"), document_id, ident["case_key"], ident["dataset_key"],
-             ident["document_name"], occ.get("artifact_kind") or "pdf_image", page,
+             ident["document_name"], occ.get("artifact_kind") or "pdf_image", page, ts, frame,
              f"{processed_prefix}{occ.get('image_artifact')}", occ.get("embedding_model")
              or "azure-ai-vision-multimodal"))
         n += 1

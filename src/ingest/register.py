@@ -16,6 +16,34 @@ Lazy sv-kb / psycopg imports — this module is only touched on a live apply.
 from __future__ import annotations
 
 
+# pipeline.media_metadata columns we may write (0002/0009). Whitelist → safe to interpolate into the SQL.
+_MEDIA_MD_COLS = frozenset({
+    "source_kind", "duration_seconds", "audio_channels", "sample_rate", "video_width", "video_height",
+    "frame_rate", "transcript_blob_path", "transcript_model", "transcript_language",
+    "transcript_word_count", "transcript_confidence", "speaker_count", "poster_blob_path",
+    "keyframe_count", "keyframe_interval_seconds", "container_format", "video_codec", "audio_codec",
+    "overall_bit_rate", "raw_metadata_blob_path"})
+
+
+def _register_media_metadata(cur, plan: dict, *, tenant_id: str, document_id: str, jsonb) -> None:
+    """Insert/upsert the pipeline.media_metadata row for an A/V document (image docs get none — the table's
+    CHECK is audio/video). Columns come from a whitelist, so the dynamic column list is injection-safe."""
+    mm = plan.get("media_metadata")
+    if not mm or (plan.get("source_kind") or "pdf") not in ("audio", "video"):
+        return
+    cols = ["document_id", "tenant_id"]
+    vals = [document_id, tenant_id]
+    for k, v in mm.items():
+        if k in _MEDIA_MD_COLS and v is not None:
+            cols.append(k); vals.append(v)
+    cols.append("metadata"); vals.append(jsonb(mm.get("metadata") or {}))
+    placeholders = ",".join(["%s"] * len(vals))
+    updates = ",".join(f"{c}=EXCLUDED.{c}" for c in cols if c != "document_id")
+    cur.execute(
+        f"INSERT INTO pipeline.media_metadata ({','.join(cols)}) VALUES ({placeholders}) "
+        f"ON CONFLICT (document_id) DO UPDATE SET {updates}", vals)
+
+
 def _rollup(findings: list) -> dict | None:
     """Element-wise max across a document's findings → the documents.content_safety FE rollup contract."""
     if not findings:
@@ -36,33 +64,38 @@ def register_document(cur, plan: dict, *, tenant_id: str, case_id: str, dataset_
     ident = plan["identifiers"]
     case_key, dataset_key, document_name = ident["case_key"], ident["dataset_key"], ident["document_name"]
     doc = plan.get("document") or {}
+    source_kind = plan.get("source_kind") or source_kind
     source_withheld = bool(plan.get("source_withheld"))
     review_status = "withheld" if source_withheld else "none"
 
-    pdf_loc = path_builder.source_pdf(case_key, dataset_key, document_name)
-    pdf_blob_path = pdf_loc.path
-    processed_prefix = pdf_blob_path.rsplit("/", 1)[0] + "/"
+    # processed prefix is source-kind-agnostic (the document's blob dir); only the canonical-file pointer
+    # differs: PDFs set pdf_blob_path=source.pdf, A/V set md_blob_path=transcript.md, images set neither.
+    processed_prefix = path_builder.source_pdf(case_key, dataset_key, document_name).path[: -len("source.pdf")]
+    pdf_blob_path = f"{processed_prefix}source.pdf" if source_kind == "pdf" else None
+    md_blob_path = f"{processed_prefix}transcript.md" if doc.get("has_transcript") else None
     rollup = _rollup(plan.get("content_safety_findings") or [])
 
     cur.execute(
         """INSERT INTO pipeline.documents
              (tenant_id, case_id, dataset_id, case_key, dataset_key, document_name, source_kind,
               content_type, source, filehash, page_count, title, metadata, content_safety, safety_status,
-              csam_suspected, review_status, source_withheld, pdf_blob_path, processed_prefix,
+              csam_suspected, review_status, source_withheld, pdf_blob_path, md_blob_path, processed_prefix,
               correlation_id, ingested_by_user_sub)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'upload',%s,%s,%s,%s,%s,'scanned',false,%s,%s,%s,%s,%s,NULL)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'upload',%s,%s,%s,%s,%s,'scanned',false,%s,%s,%s,%s,%s,%s,NULL)
            ON CONFLICT (tenant_id, case_id, dataset_id, document_name) DO UPDATE SET
              metadata = pipeline.documents.metadata || EXCLUDED.metadata,
              content_safety = EXCLUDED.content_safety, safety_status = EXCLUDED.safety_status,
              review_status = EXCLUDED.review_status, source_withheld = EXCLUDED.source_withheld,
-             pdf_blob_path = EXCLUDED.pdf_blob_path, processed_prefix = EXCLUDED.processed_prefix,
-             updated_at = now()
+             pdf_blob_path = EXCLUDED.pdf_blob_path, md_blob_path = EXCLUDED.md_blob_path,
+             processed_prefix = EXCLUDED.processed_prefix, updated_at = now()
            RETURNING document_id""",
         (tenant_id, case_id, dataset_id, case_key, dataset_key, document_name, source_kind,
          doc.get("content_type"), doc.get("filehash"), doc.get("page_count"), doc.get("title"),
          Jsonb(plan.get("metadata") or {}), Jsonb(rollup) if rollup else None,
-         review_status, source_withheld, pdf_blob_path, processed_prefix, correlation_id))
+         review_status, source_withheld, pdf_blob_path, md_blob_path, processed_prefix, correlation_id))
     document_id = str(cur.fetchone()[0])
+
+    _register_media_metadata(cur, plan, tenant_id=tenant_id, document_id=document_id, jsonb=Jsonb)
 
     for pg in (plan.get("pages") or []):
         cur.execute(

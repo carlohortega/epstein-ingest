@@ -19,6 +19,17 @@ path-manifest + a run manifest); **S9** consumes it and is the *only* step that 
   mounted drive). Run the preflight checklist below before the first live apply.
 - **§3a tenancy = A (implemented default):** require pre-created `pipeline.cases`/`pipeline.datasets`, fail
   loud via a read-only preflight before any write; `--ensure-tenancy` opts into upsert-on-first-sight.
+- **MEDIA FOLD-IN — built + tested offline 2026-06-28.** `discover.find_media_for_dataset` (media under
+  non-IMAGES dirs, reuses `src/media/common.find_media`), `src/ingest/media.py` `build_media_record` (reads
+  `<asset>.media.json`; keyframe/image vectors → `image_embeddings`/`image_occurrences` with
+  `artifact_kind=keyframe/image` + `timestamp_ms`/`frame_index`, `content_hash` taken from the occurrence
+  record; `media_metadata` A/V row; `asset_context` from the caption; transcript/poster/keyframe blobs).
+  `emit` walks both tracks per dataset (shared text store); `load.insert_occurrences` carries keyframe
+  ts/frame; `register` inserts `media_metadata` + `md_blob_path`; `apply` routes per-doc `source_kind` +
+  reads `staged_chunks`. §4a for media: CSAM image (caption `minor_indicator`) → skip; blocked image →
+  withhold doc + placeholder, vector absent; A/V blocked keyframe → `source_withheld` but the transcript
+  still ingests. Tests: `tests/run_ingest_media_tests.py` PASSES; PDF suites still green. The live run is
+  **creds-gated** like the PDF S9 (never run live).
 
 **Implementation notes / refinements made during the build (each preserves the handoff's intent):**
 1. **The package is tenant-agnostic** (§6 invariant). The COPY vector files carry NO `tenant_id`/model and the

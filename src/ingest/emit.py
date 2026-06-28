@@ -26,8 +26,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .config import IngestConfig
-from .discover import find_pdfs_for_dataset, default_store_dir
+from .discover import find_pdfs_for_dataset, find_media_for_dataset, default_store_dir
 from .record import build_apply_record, ApplyRecord
+from .media import build_media_record
 from .store_reader import VectorStore
 from .util import dump_json
 
@@ -49,10 +50,13 @@ def _record_to_plan(r: ApplyRecord) -> dict:
     """The apply-plan.jsonl line for one ingestable document (vectors live in the COPY files)."""
     return {
         "rel": r.rel,
+        "source_kind": r.source_kind,
         "staged_pdf": r.staged_pdf,
+        "staged_chunks": r.staged_chunks,
         "identifiers": r.identifiers,
         "document": r.document,
         "metadata": r.metadata,
+        "media_metadata": r.media_metadata,
         "pages": r.pages,
         "asset_context": r.asset_context,
         "content_safety_findings": r.safety_findings,
@@ -62,24 +66,31 @@ def _record_to_plan(r: ApplyRecord) -> dict:
         "blobs": [{"artifact": b.artifact, "action": b.action, "source_path": b.source_path,
                    "content_type": b.content_type} for b in r.blobs],
         "image_occurrences": [{"content_hash": iv.content_hash, "artifact_kind": iv.artifact_kind,
-                               "page_number": iv.page_number, "image_artifact": iv.artifact,
+                               "page_number": iv.page_number, "timestamp_ms": iv.timestamp_ms,
+                               "frame_index": iv.frame_index, "image_artifact": iv.artifact,
                                "embedding_model": iv.embedding_model} for iv in r.image_vectors],
         "rollups": {"images_withheld": r.images_withheld, "images_embed": r.images_embed,
                     "blank_pages": r.blank_pages, "withheld_tiers": r.withheld_tiers},
     }
 
 
-def _build_records(root: str, cfg: IngestConfig, store: VectorStore, workers: int) -> list[ApplyRecord]:
-    pdfs = find_pdfs_for_dataset(root)
-    if workers > 1 and len(pdfs) > 1:
+def _build_records(root: str, cfg: IngestConfig, store: VectorStore, workers: int,
+                   *, include_media: bool = True) -> list[ApplyRecord]:
+    """Build apply records for both tracks: PDFs (under IMAGES) + media (non-IMAGES siblings). Both share
+    the dataset's text-vector store (media transcript text was embedded into the same store by Stage 7)."""
+    thunks = [(lambda p=p: build_apply_record(p, root, cfg, store)) for p in find_pdfs_for_dataset(root)]
+    if include_media:
+        thunks += [(lambda a=p, k=k: build_media_record(a, k, root, cfg, store))
+                   for p, k in find_media_for_dataset(root)]
+    if workers > 1 and len(thunks) > 1:
         recs: list[ApplyRecord] = []
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            futs = [pool.submit(build_apply_record, p, root, cfg, store) for p in pdfs]
+            futs = [pool.submit(t) for t in thunks]
             for fut in as_completed(futs):
                 recs.append(fut.result())
         recs.sort(key=lambda r: r.rel)
         return recs
-    return [build_apply_record(p, root, cfg, store) for p in pdfs]
+    return [t() for t in thunks]
 
 
 def _agg(records: list[ApplyRecord]) -> dict:
@@ -166,7 +177,7 @@ def prepare(dataset_roots: list[str], cfg: IngestConfig, out_dir: str, *, store_
                         img_fp.write(f"{iv.content_hash}\t{iv.dim}\t{_vector_literal(iv.vector)}\n")
 
             per_dataset[name] = {"store": store.store_dir, "store_present": store.exists(),
-                                 "pdfs_seen": len(records), **_agg(records)}
+                                 "docs_seen": len(records), **_agg(records)}
             all_records.extend(records)
     finally:
         for fp in (plan_fp, blobs_fp, emb_fp, img_fp):

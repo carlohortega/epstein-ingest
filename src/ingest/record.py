@@ -69,9 +69,11 @@ class ImageVector:
     dim: int
     embedding_model: str
     vector: list[float]
-    artifact_kind: str                  # 'pdf_image' (artifact) — 'keyframe' is media-track only
+    artifact_kind: str                  # 'pdf_image' (PDF) | 'keyframe' (video) | 'image' (standalone)
     page_number: int                    # -1 = n/a
     artifact: str                       # the image blob suffix this occurrence points at
+    timestamp_ms: int = -1              # video keyframe ms (-1 = n/a)
+    frame_index: int = -1               # video keyframe sampled index (-1 = n/a)
 
 
 @dataclass
@@ -80,12 +82,15 @@ class ApplyRecord:
     rel: str
     status: str = "plan"                # plan | skip_status | skip_csam | no_sidecar | error
     error: str | None = None
-    staged_pdf: str | None = None       # absolute staged PDF path — apply reads its chunks.json (§2 step 6)
+    source_kind: str = "pdf"            # pdf (PDF track) | audio | video | image (media track)
+    staged_pdf: str | None = None       # absolute staged source path (PDF or media asset)
+    staged_chunks: str | None = None    # absolute staged chunks.json path — apply reads it (§2 step 6)
     identifiers: dict = field(default_factory=dict)   # {document_name, case_key, dataset_key}
 
     # pipeline.documents — typed columns (apply sets tenant_id/case_id/dataset_id/pdf_blob_path)
     document: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)      # documents.metadata JSONB bag (provenance, lossless)
+    media_metadata: dict | None = None                # pipeline.media_metadata row (A/V only)
 
     pages: list = field(default_factory=list)         # document_pages rows (page_number + nullable cols)
     asset_context: dict | None = None                 # asset_context row (summary_text/json/model/version)
@@ -263,7 +268,9 @@ def build_apply_record(pdf_path: str, root: str, cfg: IngestConfig, store) -> Ap
     routed image vectors that ``plan_document`` only counts."""
     rel = os.path.relpath(pdf_path, root).replace(os.sep, "/")
     r = ApplyRecord(rel)
+    r.source_kind = "pdf"
     r.staged_pdf = os.path.abspath(pdf_path)
+    r.staged_chunks = os.path.abspath(chunks_path(pdf_path))
     try:
         with open(sidecar_path(pdf_path), "r", encoding="utf-8") as f:
             sc = json.load(f)
@@ -348,7 +355,7 @@ def build_apply_record(pdf_path: str, root: str, cfg: IngestConfig, store) -> Ap
             r.blobs.append(BlobRef(f"ocr/page-{pg['page_number']}.png", ACTION_PLACEHOLDER_BLANK))
 
     # --- child content_sha (ordered) + vector presence ---
-    shas = _ordered_child_shas(pdf_path)
+    shas = ordered_child_shas(chunks_path(pdf_path))
     r.content_shas = shas
     if shas and store.exists():
         present = store.get_many(set(shas))
@@ -375,12 +382,12 @@ def _read_emb(path: str) -> dict | None:
         return None
 
 
-def _ordered_child_shas(pdf_path: str) -> list:
+def ordered_child_shas(cpath: str) -> list:
     """The document's child ``content_sha`` in chunk order (parents then children), deduped preserving
-    order — the set ``index_document`` will look up in ``pipeline.embeddings`` (pre-load must cover them)."""
+    order — the set ``index_document`` will look up in ``pipeline.embeddings`` (pre-load must cover them).
+    Takes the chunks.json path directly so the PDF and media tracks share it (their chunks paths differ)."""
     out: list = []
     seen: set = set()
-    cpath = chunks_path(pdf_path)
     if not os.path.exists(cpath):
         return out
     try:
