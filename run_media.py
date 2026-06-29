@@ -32,7 +32,11 @@ STAGES = [("src.media_stage2", "transcribe"), ("src.media_stage3", "frames"),
 
 
 def _load_env(path: str) -> int:
-    """Load KEY=VALUE lines from an env file into os.environ (strip quotes + trailing CR)."""
+    """Load KEY=VALUE lines into os.environ, matching bash ``source`` semantics: honor surrounding quotes,
+    and on UNQUOTED values drop a trailing inline ``# comment``. (The earlier version kept the comment, so a
+    line like ``AZURE_OPENAI_VISION_DEPLOYMENT=gpt-5-mini   # note`` became a deployment name with the comment
+    appended → HTTP 404 on the API URL — which silently failed caption on the whole DS-08/09 bulk.)"""
+    import re
     if not os.path.isfile(path):
         return 0
     n = 0
@@ -42,7 +46,12 @@ def _load_env(path: str) -> int:
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, v = line.split("=", 1)
-            os.environ[k.strip()] = v.strip().strip('"').strip("'").rstrip("\r")
+            v = v.strip()
+            if len(v) >= 2 and v[0] in "\"'" and v[-1] == v[0]:
+                v = v[1:-1]                                        # quoted: inner content verbatim
+            else:
+                v = re.split(r"\s+#", v, maxsplit=1)[0].strip()    # unquoted: drop inline comment
+            os.environ[k.strip()] = v.rstrip("\r")
             n += 1
     return n
 
