@@ -39,14 +39,20 @@ class EmbedConnection:
                 f"/embeddings?api-version={self.api_version}")
 
 
+def _clean(v: str | None) -> str | None:
+    # A CRLF .env.local makes sourced values carry a trailing '\r' (and stray spaces) that corrupts the
+    # embeddings URL + trips the store's api-version match. Strip defensively (same fix as media/connection).
+    return v.strip() if isinstance(v, str) else v
+
+
 def from_env(*, endpoint: str | None = None, deployment: str | None = None,
              api_version: str | None = None) -> EmbedConnection:
     """Build the embeddings Connection from the environment, with optional CLI overrides. Raises
     MissingConnection if a required value is absent — the api KEY is always env-only."""
-    ep = endpoint or os.environ.get("AZURE_OPENAI_ENDPOINT")
-    key = os.environ.get("AZURE_OPENAI_API_KEY")
-    dep = deployment or os.environ.get("AZURE_OPENAI_EMBED_DEPLOYMENT", DEFAULT_EMBED_DEPLOYMENT)
-    ver = api_version or os.environ.get("AZURE_OPENAI_EMBED_API_VERSION", DEFAULT_EMBED_API_VERSION)
+    ep = _clean(endpoint or os.environ.get("AZURE_OPENAI_ENDPOINT"))
+    key = _clean(os.environ.get("AZURE_OPENAI_API_KEY"))
+    dep = _clean(deployment or os.environ.get("AZURE_OPENAI_EMBED_DEPLOYMENT", DEFAULT_EMBED_DEPLOYMENT))
+    ver = _clean(api_version or os.environ.get("AZURE_OPENAI_EMBED_API_VERSION", DEFAULT_EMBED_API_VERSION))
     missing = [n for n, v in (("AZURE_OPENAI_ENDPOINT", ep), ("AZURE_OPENAI_API_KEY", key),
                               ("AZURE_OPENAI_EMBED_DEPLOYMENT", dep)) if not v]
     if missing:
